@@ -13,41 +13,80 @@
         android:textSize="24sp"
         android:textStyle="bold" />
 
-    <EditText
-        android:id="@+id/txtProductos"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Productos (ej: pizza, bebidas)" />
+        android:orientation="horizontal">
 
-    <EditText
-        android:id="@+id/txtTotal"
+        <EditText
+            android:id="@+id/txtProducto"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:hint="Producto o servicio" />
+
+        <EditText
+            android:id="@+id/txtPrecio"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Precio"
+            android:inputType="numberDecimal" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnAgregarProducto"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Total pagado"
-        android:inputType="numberDecimal" />
+        android:text="Agregar producto" />
 
     <TextView
+        android:id="@+id/txtListaProductos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="5"
+        android:scrollbars="vertical"
+        android:text="Sin productos" />
+
+    <TextView
+        android:id="@+id/txtTotal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Dividir con (se divide en partes iguales contigo incluido)" />
+        android:layout_marginTop="4dp"
+        android:text="Total: $0"
+        android:textStyle="bold" />
 
-    <ListView
-        android:id="@+id/listaContactos"
+    <RadioGroup
+        android:id="@+id/rgReparto"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/rbIguales"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Partes iguales" />
+
+        <RadioButton
+            android:id="@+id/rbPersonalizado"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Personalizado" />
+    </RadioGroup>
 
     <Button
         android:id="@+id/btnDividir"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Dividir gasto" />
+        android:text="Dividir con contactos" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Deudas pendientes (toca una para marcarla pagada)"
+        android:text="Deudas pendientes (toca una para ver el detalle)"
         android:textStyle="bold" />
 
     <ListView

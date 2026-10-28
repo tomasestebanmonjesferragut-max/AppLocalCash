@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
-        super(context, "localcash.db", null, 1);
+        super(context, "localcash.db", null, 2);
     }
 
     @Override
@@ -17,15 +17,14 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE contactos (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT)");
         db.execSQL("CREATE TABLE compras (id INTEGER PRIMARY KEY AUTOINCREMENT, descripcion TEXT, monto REAL, fecha TEXT, agendada INTEGER, contacto_id INTEGER)");
         db.execSQL("CREATE TABLE deudas (id INTEGER PRIMARY KEY AUTOINCREMENT, compra_id INTEGER, contacto_id INTEGER, monto REAL, pagada INTEGER)");
+        db.execSQL("CREATE TABLE compra_productos (id INTEGER PRIMARY KEY AUTOINCREMENT, compra_id INTEGER, nombre TEXT, precio REAL)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS cuentas");
-        db.execSQL("DROP TABLE IF EXISTS movimientos");
-        db.execSQL("DROP TABLE IF EXISTS contactos");
-        db.execSQL("DROP TABLE IF EXISTS compras");
-        db.execSQL("DROP TABLE IF EXISTS deudas");
-        onCreate(db);
+        // Version 2: productos de cada gasto compartido (no se borran los datos anteriores)
+        if (oldVersion < 2) {
+            db.execSQL("CREATE TABLE compra_productos (id INTEGER PRIMARY KEY AUTOINCREMENT, compra_id INTEGER, nombre TEXT, precio REAL)");
+        }
     }
 }
