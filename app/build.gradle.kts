@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
 }
 
 android {
@@ -40,8 +41,12 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
 
-    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    implementation(libs.play.services.maps)
+    implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("androidx.biometric:biometric:1.1.0")
+}
 
-
+secrets {
+    propertiesFileName = "local.properties"
+    defaultPropertiesFileName = "local.defaults.properties"
 }

@@ -1,10 +1,10 @@
 package com.example.mapalocalcash;
 
-import static com.example.mapalocalcash.R.*;
-import static com.example.mapalocalcash.R.mipmap.*;
-
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -15,27 +15,34 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import org.osmdroid.config.Configuration;
-import org.osmdroid.events.MapEventsReceiver;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.MapEventsOverlay;
-import org.osmdroid.views.overlay.Marker;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    private MapView map= null;
-    private MapEventsOverlay eventos;
+    private GoogleMap mMap = null;
     private DBHelper dbHelper;
+    private FusedLocationProviderClient ubicacion;
+    private Marker puntoMarcado = null;
+    private LatLng yo = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,31 +56,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         dbHelper = new DBHelper(this);
+        ubicacion = LocationServices.getFusedLocationProviderClient(this);
 
-        Configuration.getInstance().setUserAgentValue("Mapa/ tomas@gmail.com");
-
-        map = findViewById(R.id.map);
-        map.setTileSource(TileSourceFactory.WIKIMEDIA);
-        map.setMultiTouchControls(true);
-
-        GeoPoint starPoin = new GeoPoint(-33.498895, -70.616617);
-
-        map.getController().setZoom(18.0);
-        map.getController().setCenter(starPoin);
-        Toast.makeText(this, "Manten presionado el mapa para registrar un movimiento ahi", Toast.LENGTH_LONG).show();
-
-        eventos = new MapEventsOverlay(new MapEventsReceiver() {
-            @Override
-            public boolean singleTapConfirmedHelper(GeoPoint p) {
-                return false;
-            }
-
-            @Override
-            public boolean longPressHelper(GeoPoint p) {
-                nuevoMovimiento(p);
-                return true;
-            }
-        });
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
         findViewById(R.id.btnMovimiento).setOnClickListener(v -> nuevoMovimiento(null));
         findViewById(R.id.btnCuentas).setOnClickListener(v -> startActivity(new Intent(this, CuentasActivity.class)));
@@ -83,38 +70,138 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        map.onResume();
-        cargarMovimientos();
+    public void onMapReady(@NonNull GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+
+        LatLng starPoin = new LatLng(-33.498895, -70.616617);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(starPoin, 18));
+        Toast.makeText(this, "Manten presionado el mapa para registrar un movimiento ahi", Toast.LENGTH_LONG).show();
+
+        // Marca punto en la vista: solo uno, si se marca otro se quita el anterior
+        mMap.setOnMapClickListener(punto -> {
+            if (puntoMarcado != null) {
+                puntoMarcado.remove();
+            }
+            puntoMarcado = mMap.addMarker(new MarkerOptions()
+                    .position(punto)
+                    .title("Punto marcado")
+                    .snippet("Toca este cartel para quitarlo"));
+        });
+
+        // Quitar el punto marcado: tocar el marcador y luego su cartel
+        mMap.setOnInfoWindowClickListener(marker -> {
+            if (marker.equals(puntoMarcado)) {
+                marker.remove();
+                puntoMarcado = null;
+                Toast.makeText(this, "Punto quitado", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Mantener presionado: registrar un movimiento en ese lugar
+        mMap.setOnMapLongClickListener(this::nuevoMovimiento);
+
+        cargarMapa();
+        activarUbicacion();
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        map.onPause();
+    protected void onResume() {
+        super.onResume();
+        if (mMap != null) {
+            cargarMapa();
+        }
     }
 
-    // Pone en el mapa un marcador por cada movimiento que tenga ubicacion
-    private void cargarMovimientos() {
-        map.getOverlays().clear();
-        map.getOverlays().add(eventos);
+    // Dibuja los puntos fijos, mi ubicacion y un marcador por cada movimiento con ubicacion
+    private void cargarMapa() {
+        mMap.clear();
+        puntoMarcado = null;
 
+        // Puntos en el mapa
+        LatLng starPoin = new LatLng(-33.498895, -70.616617);
+        LatLng PuntoMoto = new LatLng(-33.498738, -70.616173);
+        LatLng PuntoPoli = new LatLng(-33.498609, -70.615595);
+        LatLng PuntoDulce = new LatLng(-33.50797374644561, -70.79157437996089);
+
+        mMap.addMarker(new MarkerOptions()
+                .position(starPoin)
+                .title("Hola ")
+                .snippet("Repartidor cerca"));
+
+        // Puntos con iconos
+        mMap.addMarker(new MarkerOptions()
+                .position(PuntoMoto)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_moto_foreground))
+                .title("Moto")
+                .snippet("Repartidor cerca"));
+
+        mMap.addMarker(new MarkerOptions()
+                .position(PuntoPoli)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_poli_foreground))
+                .title("Poli")
+                .snippet("Carabinero cerca"));
+
+        mMap.addMarker(new MarkerOptions()
+                .position(PuntoDulce)
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_dulsuratuhogar_foreground))
+                .title("Pasteleria")
+                .snippet("Dulsura En Tu Hogar"));
+
+        if (yo != null) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(yo)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                    .title("Estoy aqui"));
+        }
+
+        // Movimientos guardados en SQLite (verdes)
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT m.tipo, m.monto, m.descripcion, m.lat, m.lon, c.nombre FROM movimientos m JOIN cuentas c ON c.id = m.cuenta_id WHERE m.lat IS NOT NULL", null);
         while (c.moveToNext()) {
-            Marker maker = new Marker(map);
-            maker.setPosition(new GeoPoint(c.getDouble(3), c.getDouble(4)));
-            maker.setTitle(c.getString(2));
-            maker.setSnippet(c.getString(0) + " $" + Math.round(c.getDouble(1)) + " - " + c.getString(5));
-            map.getOverlays().add(maker);
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(c.getDouble(3), c.getDouble(4)))
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                    .title(c.getString(2))
+                    .snippet(c.getString(0) + " $" + Math.round(c.getDouble(1)) + " - " + c.getString(5)));
         }
         c.close();
-        map.invalidate();
+    }
+
+    // Geolocalizacion
+    @SuppressLint("MissingPermission")
+    private void activarUbicacion() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+            return;
+        }
+
+        mMap.setMyLocationEnabled(true);
+        ubicacion.getLastLocation().addOnSuccessListener(location -> {
+            if (location != null) {
+                yo = new LatLng(location.getLatitude(), location.getLongitude());
+                cargarMapa();
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(yo, 17));
+            } else {
+                Toast.makeText(this, "Activa el GPS para ver tu ubicacion", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            activarUbicacion();
+        } else {
+            Toast.makeText(this, "Sin permiso de ubicacion", Toast.LENGTH_SHORT).show();
+        }
     }
 
     // punto es null cuando el movimiento se registra sin ubicacion
-    private void nuevoMovimiento(GeoPoint punto) {
+    private void nuevoMovimiento(LatLng punto) {
         ArrayList<Integer> idsCuentas = new ArrayList<>();
         ArrayList<String> nombresCuentas = new ArrayList<>();
         Cursor c = dbHelper.getReadableDatabase().rawQuery("SELECT id, nombre FROM cuentas", null);
@@ -157,8 +244,8 @@ public class MainActivity extends AppCompatActivity {
                     valores.put("monto", monto);
                     valores.put("descripcion", txtDescripcion.getText().toString());
                     if (punto != null) {
-                        valores.put("lat", punto.getLatitude());
-                        valores.put("lon", punto.getLongitude());
+                        valores.put("lat", punto.latitude);
+                        valores.put("lon", punto.longitude);
                     }
 
                     SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -167,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
                     db.execSQL("UPDATE cuentas SET saldo = saldo + ? WHERE id = ?", new Object[]{cambio, cuentaId});
 
                     Toast.makeText(this, "Movimiento guardado", Toast.LENGTH_SHORT).show();
-                    cargarMovimientos();
+                    cargarMapa();
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
