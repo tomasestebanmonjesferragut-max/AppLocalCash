@@ -36,6 +36,7 @@ public class ComprasActivity extends AppCompatActivity {
         compraDAO = new CompraDAO(this);
         EditText txtDescripcion = findViewById(R.id.txtDescripcion);
         EditText txtMonto = findViewById(R.id.txtMonto);
+        Monto.puntosAlEscribir(txtMonto);
         EditText txtFecha = findViewById(R.id.txtFecha);
         CheckBox chkAgendada = findViewById(R.id.chkAgendada);
         Spinner spContacto = findViewById(R.id.spContacto);

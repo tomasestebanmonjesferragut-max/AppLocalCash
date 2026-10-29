@@ -34,6 +34,7 @@ public class CuentasActivity extends AppCompatActivity {
         movimientoDAO = new MovimientoDAO(this);
         EditText txtNombre = findViewById(R.id.txtNombre);
         EditText txtSaldo = findViewById(R.id.txtSaldo);
+        Monto.puntosAlEscribir(txtSaldo);
         lista = findViewById(R.id.lista);
 
         findViewById(R.id.btnAgregar).setOnClickListener(v -> {

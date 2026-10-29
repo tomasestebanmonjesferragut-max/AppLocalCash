@@ -83,6 +83,7 @@ public class DialogoMovimiento {
         Spinner spCuenta = vista.findViewById(R.id.spCuenta);
         RadioButton rbIngreso = vista.findViewById(R.id.rbIngreso);
         EditText txtMonto = vista.findViewById(R.id.txtMonto);
+        Monto.puntosAlEscribir(txtMonto);
         EditText txtDescripcion = vista.findViewById(R.id.txtDescripcion);
         View panelUbicacion = vista.findViewById(R.id.panelUbicacion);
         View panelLugar = vista.findViewById(R.id.panelLugar);

@@ -41,6 +41,7 @@ public class ContactosActivity extends AppCompatActivity {
         EditText txtNombre = findViewById(R.id.txtNombre);
         EditText txtTelefono = findViewById(R.id.txtTelefono);
         EditText txtMeDebe = findViewById(R.id.txtMeDebe);
+        Monto.puntosAlEscribir(txtMeDebe);
         EditText txtMotivo = findViewById(R.id.txtMotivo);
         lista = findViewById(R.id.lista);
 
@@ -117,7 +118,7 @@ public class ContactosActivity extends AppCompatActivity {
 
         EditText monto = new EditText(this);
         monto.setHint("Monto $");
-        monto.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        Monto.puntosAlEscribir(monto);
         vista.addView(monto);
 
         EditText motivo = new EditText(this);

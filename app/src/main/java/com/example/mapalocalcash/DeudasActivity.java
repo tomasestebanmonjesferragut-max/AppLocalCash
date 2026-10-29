@@ -83,6 +83,7 @@ public class DeudasActivity extends AppCompatActivity {
         compraRepository = new CompraRepository(this);
         EditText txtProducto = findViewById(R.id.txtProducto);
         EditText txtPrecio = findViewById(R.id.txtPrecio);
+        Monto.puntosAlEscribir(txtPrecio);
         txtListaProductos = findViewById(R.id.txtListaProductos);
         txtTotal = findViewById(R.id.txtTotal);
         rbIguales = findViewById(R.id.rbIguales);
@@ -92,6 +93,7 @@ public class DeudasActivity extends AppCompatActivity {
         txtCadaUno = findViewById(R.id.txtCadaUno);
         txtNombrePersona = findViewById(R.id.txtNombrePersona);
         txtMontoPersona = findViewById(R.id.txtMontoPersona);
+        Monto.puntosAlEscribir(txtMontoPersona);
         listaPersonas = findViewById(R.id.listaPersonas);
         txtEstadoReparto = findViewById(R.id.txtEstadoReparto);
         rbPendientes = findViewById(R.id.rbPendientes);
@@ -417,8 +419,8 @@ public class DeudasActivity extends AppCompatActivity {
 
         EditText precio = new EditText(this);
         precio.setHint("Precio $");
-        precio.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        precio.setText(String.valueOf(Math.round(productos.get(posicion).getPrecio())));
+        Monto.puntosAlEscribir(precio);
+        precio.setText(Monto.miles(productos.get(posicion).getPrecio()));
         vista.addView(precio);
 
         new AlertDialog.Builder(this)

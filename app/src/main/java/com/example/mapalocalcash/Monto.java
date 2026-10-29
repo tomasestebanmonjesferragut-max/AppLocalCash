@@ -2,7 +2,11 @@ package com.example.mapalocalcash;
 
 import android.content.Context;
 import android.graphics.Typeface;
+import android.text.Editable;
 import android.text.SpannableString;
+import android.text.TextWatcher;
+import android.text.method.DigitsKeyListener;
+import android.widget.EditText;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
@@ -49,6 +53,41 @@ public class Monto {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    // Pone los puntos de miles mientras se escribe en un campo de monto (20000 -> 20.000).
+    // Los montos son en pesos, sin decimales.
+    public static void puntosAlEscribir(EditText campo) {
+        // Teclado numerico que acepta los puntos que pone la app
+        campo.setKeyListener(DigitsKeyListener.getInstance("0123456789."));
+        campo.addTextChangedListener(new TextWatcher() {
+            private boolean cambiando = false;
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (cambiando) {
+                    return;
+                }
+                String digitos = s.toString().replaceAll("[^0-9]", "");
+                String conPuntos = digitos.isEmpty() ? "" : miles(Double.parseDouble(digitos));
+                if (!conPuntos.equals(s.toString())) {
+                    // El cursor queda a la misma distancia del final que antes
+                    int desdeElFinal = s.length() - campo.getSelectionEnd();
+                    cambiando = true;
+                    s.replace(0, s.length(), conPuntos);
+                    cambiando = false;
+                    campo.setSelection(Math.max(0, Math.min(conPuntos.length(), conPuntos.length() - desdeElFinal)));
+                }
+            }
+        });
     }
 
     // Texto normal seguido de un monto en verde (suma) o rojo (resta)
