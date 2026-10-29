@@ -11,4 +11,5 @@
     <color name="texto_suave">#FF5F6B66</color>
     <color name="borde">#FFDCE3DF</color>
     <color name="blanco_suave">#E6FFFFFF</color>
+    <color name="logo_fondo">#FF0C1B20</color>
 </resources>
