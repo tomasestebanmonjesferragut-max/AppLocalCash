@@ -1,9 +1,6 @@
 package com.example.mapalocalcash;
 
-import android.content.ContentValues;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
@@ -17,28 +14,30 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.mapalocalcash.dao.ContactoDAO;
+import com.example.mapalocalcash.dao.DeudaDAO;
+import com.example.mapalocalcash.model.Contacto;
+import com.example.mapalocalcash.model.Deuda;
+import com.example.mapalocalcash.repository.ContactoRepository;
+
 import java.util.ArrayList;
 
 public class ContactosActivity extends AppCompatActivity {
 
-    // Deudas pendientes de un contacto: las anotadas a mano (contacto_id) y las de gastos
-    // compartidos donde aparece con su nombre
-    private static final String DEUDAS_DEL_CONTACTO =
-            " FROM deudas d LEFT JOIN compras co ON co.id = d.compra_id" +
-            " WHERE d.pagada = 0 AND (d.contacto_id = ? OR (d.contacto_id IS NULL AND LOWER(d.nombre) = LOWER(?)))";
-
-    private DBHelper dbHelper;
+    private ContactoDAO contactoDAO;
+    private DeudaDAO deudaDAO;
+    private ContactoRepository contactoRepository;
     private ListView lista;
-    private ArrayList<Integer> ids = new ArrayList<>();
-    private ArrayList<String> nombres = new ArrayList<>();
-    private ArrayList<String> telefonos = new ArrayList<>();
+    private ArrayList<Contacto> contactos = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contactos);
 
-        dbHelper = new DBHelper(this);
+        contactoDAO = new ContactoDAO(this);
+        deudaDAO = new DeudaDAO(this);
+        contactoRepository = new ContactoRepository(this);
         EditText txtNombre = findViewById(R.id.txtNombre);
         EditText txtTelefono = findViewById(R.id.txtTelefono);
         EditText txtMeDebe = findViewById(R.id.txtMeDebe);
@@ -58,14 +57,8 @@ public class ContactosActivity extends AppCompatActivity {
                 return;
             }
 
-            ContentValues valores = new ContentValues();
-            valores.put("nombre", nombre);
-            valores.put("telefono", txtTelefono.getText().toString().trim());
-            long id = dbHelper.getWritableDatabase().insert("contactos", null, valores);
-
-            if (meDebe != null && meDebe > 0) {
-                agregarDeuda((int) id, nombre, meDebe, txtMotivo.getText().toString().trim());
-            }
+            contactoRepository.crear(new Contacto(nombre, txtTelefono.getText().toString().trim()),
+                    meDebe, txtMotivo.getText().toString().trim());
 
             txtNombre.setText("");
             txtTelefono.setText("");
@@ -74,84 +67,49 @@ public class ContactosActivity extends AppCompatActivity {
             cargar();
         });
 
-        lista.setOnItemClickListener((parent, view, position, id) -> opciones(position));
+        lista.setOnItemClickListener((parent, view, position, id) -> opciones(contactos.get(position)));
 
         cargar();
     }
 
     private void cargar() {
-        ids.clear();
-        nombres.clear();
-        telefonos.clear();
+        contactos = contactoDAO.listar();
         ArrayList<CharSequence> textos = new ArrayList<>();
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor c = db.rawQuery("SELECT id, nombre, telefono FROM contactos ORDER BY nombre", null);
-        while (c.moveToNext()) {
-            int id = c.getInt(0);
-            String nombre = c.getString(1);
-            String telefono = c.isNull(2) ? "" : c.getString(2);
-            ids.add(id);
-            nombres.add(nombre);
-            telefonos.add(telefono);
-
-            String antes = "👤 " + nombre + (telefono.isEmpty() ? "" : "\n📞 " + telefono) + "\n";
-            double debe = totalQueDebe(id, nombre);
+        for (Contacto contacto : contactos) {
+            String telefono = contacto.getTelefono();
+            String antes = "👤 " + contacto.getNombre() + (telefono.isEmpty() ? "" : "\n📞 " + telefono) + "\n";
+            double debe = deudaDAO.totalPendienteDeContacto(contacto.getId(), contacto.getNombre());
             textos.add(debe > 0
                     ? Monto.conColor(this, antes, "Te debe + $" + Math.round(debe), true)
                     : antes + "✔ Al día");
         }
-        c.close();
         lista.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, textos));
     }
 
-    private double totalQueDebe(int id, String nombre) {
-        Cursor c = dbHelper.getReadableDatabase().rawQuery("SELECT IFNULL(SUM(d.monto), 0)" + DEUDAS_DEL_CONTACTO,
-                new String[]{String.valueOf(id), nombre});
-        c.moveToFirst();
-        double total = c.getDouble(0);
-        c.close();
-        return total;
-    }
-
-    // Deuda anotada a mano (no viene de un gasto compartido)
-    private void agregarDeuda(int contactoId, String nombre, double monto, String motivo) {
-        ContentValues deuda = new ContentValues();
-        deuda.put("contacto_id", contactoId);
-        deuda.put("nombre", nombre);
-        deuda.put("monto", monto);
-        deuda.put("pagada", 0);
-        deuda.put("detalle", motivo.isEmpty() ? "Préstamo" : motivo);
-        dbHelper.getWritableDatabase().insert("deudas", null, deuda);
-    }
-
-    private void opciones(int posicion) {
-        int id = ids.get(posicion);
-        String nombre = nombres.get(posicion);
-        String telefono = telefonos.get(posicion);
-
+    private void opciones(Contacto contacto) {
         String[] opciones = {"📞 Llamar", "➕ Anotar monto que me debe", "✅ Ver deudas y marcar pagos", "🗑️ Borrar contacto"};
         new AlertDialog.Builder(this)
-                .setTitle(nombre)
+                .setTitle(contacto.getNombre())
                 .setItems(opciones, (d, which) -> {
                     if (which == 0) {
-                        if (telefono.isEmpty()) {
+                        if (contacto.getTelefono().isEmpty()) {
                             Toast.makeText(this, "Este contacto no tiene número", Toast.LENGTH_SHORT).show();
                         } else {
                             // Abre el marcador del telefono con el numero (no llama solo)
-                            startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + telefono)));
+                            startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + contacto.getTelefono())));
                         }
                     } else if (which == 1) {
-                        anotarDeuda(id, nombre);
+                        anotarDeuda(contacto);
                     } else if (which == 2) {
-                        verDeudas(id, nombre);
+                        verDeudas(contacto);
                     } else {
-                        borrar(id, nombre);
+                        borrar(contacto);
                     }
                 })
                 .show();
     }
 
-    private void anotarDeuda(int id, String nombre) {
+    private void anotarDeuda(Contacto contacto) {
         LinearLayout vista = new LinearLayout(this);
         vista.setOrientation(LinearLayout.VERTICAL);
         int p = (int) (20 * getResources().getDisplayMetrics().density);
@@ -167,7 +125,7 @@ public class ContactosActivity extends AppCompatActivity {
         vista.addView(motivo);
 
         new AlertDialog.Builder(this)
-                .setTitle("¿Cuánto te debe " + nombre + "?")
+                .setTitle("¿Cuánto te debe " + contacto.getNombre() + "?")
                 .setView(vista)
                 .setPositiveButton("Guardar", (d, w) -> {
                     Double valor = Monto.leer(monto.getText().toString());
@@ -175,7 +133,7 @@ public class ContactosActivity extends AppCompatActivity {
                         Toast.makeText(this, "Escribe un monto valido", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    agregarDeuda(id, nombre, valor, motivo.getText().toString().trim());
+                    contactoRepository.anotarDeuda(contacto.getId(), contacto.getNombre(), valor, motivo.getText().toString().trim());
                     cargar();
                 })
                 .setNegativeButton("Cancelar", null)
@@ -183,32 +141,26 @@ public class ContactosActivity extends AppCompatActivity {
     }
 
     // Lista lo que debe (anotado a mano y de gastos compartidos) para marcar lo que ya pago
-    private void verDeudas(int id, String nombre) {
-        ArrayList<Integer> idsDeudas = new ArrayList<>();
-        ArrayList<CharSequence> textos = new ArrayList<>();
-        Cursor c = dbHelper.getReadableDatabase().rawQuery(
-                "SELECT d.id, d.monto, COALESCE(co.descripcion, d.detalle, 'Deuda')" + DEUDAS_DEL_CONTACTO,
-                new String[]{String.valueOf(id), nombre});
-        while (c.moveToNext()) {
-            idsDeudas.add(c.getInt(0));
-            textos.add(TextUtils.concat(Monto.conColor(this, "", "+ $" + Math.round(c.getDouble(1)), true), "  " + c.getString(2)));
-        }
-        c.close();
-
-        if (idsDeudas.isEmpty()) {
-            Toast.makeText(this, nombre + " no te debe nada", Toast.LENGTH_SHORT).show();
+    private void verDeudas(Contacto contacto) {
+        ArrayList<Deuda> deudas = deudaDAO.pendientesDeContacto(contacto.getId(), contacto.getNombre());
+        if (deudas.isEmpty()) {
+            Toast.makeText(this, contacto.getNombre() + " no te debe nada", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        boolean[] pagadas = new boolean[idsDeudas.size()];
+        ArrayList<CharSequence> textos = new ArrayList<>();
+        for (Deuda deuda : deudas) {
+            textos.add(TextUtils.concat(Monto.conColor(this, "", "+ $" + Math.round(deuda.getMonto()), true), "  " + deuda.getOrigen()));
+        }
+
+        boolean[] pagadas = new boolean[deudas.size()];
         new AlertDialog.Builder(this)
-                .setTitle("Marca lo que " + nombre + " ya pagó")
+                .setTitle("Marca lo que " + contacto.getNombre() + " ya pagó")
                 .setMultiChoiceItems(textos.toArray(new CharSequence[0]), pagadas, (d, which, isChecked) -> pagadas[which] = isChecked)
                 .setPositiveButton("Guardar", (d, w) -> {
-                    SQLiteDatabase db = dbHelper.getWritableDatabase();
-                    for (int i = 0; i < idsDeudas.size(); i++) {
+                    for (int i = 0; i < deudas.size(); i++) {
                         if (pagadas[i]) {
-                            db.execSQL("UPDATE deudas SET pagada = 1 WHERE id = ?", new Object[]{idsDeudas.get(i)});
+                            deudaDAO.marcarPagada(deudas.get(i).getId(), true);
                         }
                     }
                     cargar();
@@ -217,16 +169,12 @@ public class ContactosActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void borrar(int id, String nombre) {
+    private void borrar(Contacto contacto) {
         new AlertDialog.Builder(this)
-                .setTitle("¿Borrar a " + nombre + "?")
+                .setTitle("¿Borrar a " + contacto.getNombre() + "?")
                 .setMessage("Se borran también las deudas que anotaste a mano. Lo de los gastos compartidos se mantiene con su nombre.")
                 .setPositiveButton("Borrar", (d, w) -> {
-                    SQLiteDatabase db = dbHelper.getWritableDatabase();
-                    String[] arg = {String.valueOf(id)};
-                    db.delete("deudas", "contacto_id = ? AND compra_id IS NULL", arg);
-                    db.execSQL("UPDATE deudas SET contacto_id = NULL WHERE contacto_id = ?", new Object[]{id});
-                    db.delete("contactos", "id = ?", arg);
+                    contactoRepository.borrar(contacto.getId());
                     cargar();
                 })
                 .setNegativeButton("Cancelar", null)

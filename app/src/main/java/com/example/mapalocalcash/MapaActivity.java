@@ -3,8 +3,6 @@ package com.example.mapalocalcash;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.widget.Toast;
 
@@ -16,6 +14,8 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.mapalocalcash.dao.MovimientoDAO;
+import com.example.mapalocalcash.model.Movimiento;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -30,7 +30,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MapaActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap = null;
-    private DBHelper dbHelper;
+    private MovimientoDAO movimientoDAO;
     private FusedLocationProviderClient ubicacion;
     private Marker puntoMarcado = null;
     private LatLng yo = null;
@@ -46,7 +46,7 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
             return insets;
         });
 
-        dbHelper = new DBHelper(this);
+        movimientoDAO = new MovimientoDAO(this);
         ubicacion = LocationServices.getFusedLocationProviderClient(this);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -83,12 +83,12 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
                 puntoMarcado = null;
                 Toast.makeText(this, "Punto quitado", Toast.LENGTH_SHORT).show();
             } else if (marker.getTag() instanceof Integer) {
-                DialogoMovimiento.confirmarBorrar(this, dbHelper, (Integer) marker.getTag(), this::cargarMapa);
+                DialogoMovimiento.confirmarBorrar(this, (Integer) marker.getTag(), this::cargarMapa);
             }
         });
 
         // Mantener presionado: registrar un movimiento en ese lugar
-        mMap.setOnMapLongClickListener(punto -> DialogoMovimiento.mostrar(this, dbHelper, punto, this::cargarMapa));
+        mMap.setOnMapLongClickListener(punto -> DialogoMovimiento.mostrar(this, punto, this::cargarMapa));
 
         cargarMapa();
         activarUbicacion();
@@ -115,20 +115,17 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         // Movimientos guardados en SQLite: ingreso en verde (suma), egreso en rojo (resta)
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor c = db.rawQuery("SELECT m.tipo, m.monto, m.descripcion, m.lat, m.lon, c.nombre, m.id FROM movimientos m JOIN cuentas c ON c.id = m.cuenta_id WHERE m.lat IS NOT NULL", null);
-        while (c.moveToNext()) {
-            boolean ingreso = c.getString(0).equals("Ingreso");
+        for (Movimiento m : movimientoDAO.listarConUbicacion()) {
+            boolean ingreso = m.esIngreso();
             Marker marcador = mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(c.getDouble(3), c.getDouble(4)))
+                    .position(new LatLng(m.getLat(), m.getLon()))
                     .icon(BitmapDescriptorFactory.defaultMarker(ingreso ? BitmapDescriptorFactory.HUE_GREEN : BitmapDescriptorFactory.HUE_RED))
-                    .title(c.getString(2))
-                    .snippet((ingreso ? "+ $" : "− $") + Math.round(c.getDouble(1)) + "  " + c.getString(0) + " · " + c.getString(5) + "  (toca para borrar)"));
+                    .title(m.getDescripcion())
+                    .snippet((ingreso ? "+ $" : "− $") + Math.round(m.getMonto()) + "  " + m.getTipo() + " · " + m.getCuentaNombre() + "  (toca para borrar)"));
             if (marcador != null) {
-                marcador.setTag(c.getInt(6));
+                marcador.setTag(m.getId());
             }
         }
-        c.close();
     }
 
     // Geolocalizacion

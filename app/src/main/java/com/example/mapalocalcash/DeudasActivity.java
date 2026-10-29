@@ -1,8 +1,5 @@
 package com.example.mapalocalcash;
 
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -20,15 +17,24 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-import java.text.SimpleDateFormat;
+import com.example.mapalocalcash.dao.CompraDAO;
+import com.example.mapalocalcash.dao.ContactoDAO;
+import com.example.mapalocalcash.dao.DeudaDAO;
+import com.example.mapalocalcash.dao.ICompra;
+import com.example.mapalocalcash.model.Contacto;
+import com.example.mapalocalcash.model.Deuda;
+import com.example.mapalocalcash.model.GastoCompartido;
+import com.example.mapalocalcash.model.Producto;
+import com.example.mapalocalcash.repository.CompraRepository;
+
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 
 public class DeudasActivity extends AppCompatActivity {
 
-    private DBHelper dbHelper;
+    private CompraDAO compraDAO;
+    private DeudaDAO deudaDAO;
+    private CompraRepository compraRepository;
 
     private TextView txtListaProductos;
     private TextView txtTotal;
@@ -55,10 +61,9 @@ public class DeudasActivity extends AppCompatActivity {
     private Button btnGuardar;
     private android.widget.ScrollView scroll;
     // id de la operacion que se esta editando (null = operacion nueva)
-    private Long editandoId = null;
+    private Integer editandoId = null;
 
-    private ArrayList<String> productos = new ArrayList<>();
-    private ArrayList<Double> precios = new ArrayList<>();
+    private ArrayList<Producto> productos = new ArrayList<>();
     private ArrayList<String> personas = new ArrayList<>();
     private ArrayList<Double> montosPersonas = new ArrayList<>();
     // Nombre del contacto (en minusculas) -> id, para enlazar con la agenda
@@ -73,7 +78,9 @@ public class DeudasActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_deudas);
 
-        dbHelper = new DBHelper(this);
+        compraDAO = new CompraDAO(this);
+        deudaDAO = new DeudaDAO(this);
+        compraRepository = new CompraRepository(this);
         EditText txtProducto = findViewById(R.id.txtProducto);
         EditText txtPrecio = findViewById(R.id.txtPrecio);
         txtListaProductos = findViewById(R.id.txtListaProductos);
@@ -105,13 +112,11 @@ public class DeudasActivity extends AppCompatActivity {
 
         // Sugerir nombres de la agenda de contactos
         ArrayList<String> nombres = new ArrayList<>();
-        Cursor c = dbHelper.getReadableDatabase().rawQuery("SELECT id, nombre FROM contactos ORDER BY nombre", null);
-        while (c.moveToNext()) {
-            contactos.put(c.getString(1).trim().toLowerCase(), c.getInt(0));
-            nombres.add(c.getString(1));
-            nombresContactos.add(c.getString(1));
+        for (Contacto contacto : new ContactoDAO(this).listar()) {
+            contactos.put(contacto.getNombre().trim().toLowerCase(), contacto.getId());
+            nombres.add(contacto.getNombre());
+            nombresContactos.add(contacto.getNombre());
         }
-        c.close();
         txtNombrePersona.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, nombres));
 
         btnAgregarProducto.setOnClickListener(v -> {
@@ -121,8 +126,7 @@ public class DeudasActivity extends AppCompatActivity {
                 Toast.makeText(this, "Falta el producto o un precio valido", Toast.LENGTH_SHORT).show();
                 return;
             }
-            productos.add(nombre);
-            precios.add(precio);
+            productos.add(new Producto(nombre, precio));
             txtProducto.setText("");
             txtPrecio.setText("");
             mostrarProductos();
@@ -178,8 +182,8 @@ public class DeudasActivity extends AppCompatActivity {
 
     private double total() {
         double suma = 0;
-        for (double p : precios) {
-            suma += p;
+        for (Producto p : productos) {
+            suma += p.getPrecio();
         }
         return suma;
     }
@@ -204,7 +208,7 @@ public class DeudasActivity extends AppCompatActivity {
             fila.setGravity(android.view.Gravity.CENTER_VERTICAL);
 
             TextView texto = new TextView(this);
-            texto.setText("• " + productos.get(i) + "   $" + Math.round(precios.get(i)) + (dividiendo ? "" : "   ✏️"));
+            texto.setText("• " + productos.get(i).getNombre() + "   $" + Math.round(productos.get(i).getPrecio()) + (dividiendo ? "" : "   ✏️"));
             texto.setTextColor(ContextCompat.getColor(this, R.color.texto));
             texto.setTextSize(15);
             texto.setPadding(0, dp(6), 0, dp(6));
@@ -219,7 +223,6 @@ public class DeudasActivity extends AppCompatActivity {
                 quitar.setTextColor(ContextCompat.getColor(this, R.color.rojo));
                 quitar.setOnClickListener(v -> {
                     productos.remove(posicion);
-                    precios.remove(posicion);
                     mostrarProductos();
                 });
                 fila.addView(quitar);
@@ -346,55 +349,7 @@ public class DeudasActivity extends AppCompatActivity {
             montos.addAll(montosPersonas);
         }
 
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-
-        ContentValues compra = new ContentValues();
-        compra.put("descripcion", String.join(", ", productos));
-        compra.put("monto", total());
-
-        long compraId;
-        // Quien ya habia pagado (por nombre) se mantiene como pagado al editar
-        HashMap<String, Integer> yaPagaron = new HashMap<>();
-        if (editandoId == null) {
-            compra.put("fecha", new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date()));
-            compra.put("agendada", 0);
-            compraId = db.insert("compras", null, compra);
-        } else {
-            compraId = editandoId;
-            String[] arg = {String.valueOf(compraId)};
-            Cursor c = db.rawQuery("SELECT COALESCE(d.nombre, ct.nombre), d.pagada FROM deudas d LEFT JOIN contactos ct ON ct.id = d.contacto_id WHERE d.compra_id = ?", arg);
-            while (c.moveToNext()) {
-                if (c.getString(0) != null) {
-                    yaPagaron.put(c.getString(0).toLowerCase(), c.getInt(1));
-                }
-            }
-            c.close();
-            db.update("compras", compra, "id = ?", arg);
-            db.delete("compra_productos", "compra_id = ?", arg);
-            db.delete("deudas", "compra_id = ?", arg);
-        }
-
-        for (int i = 0; i < productos.size(); i++) {
-            ContentValues producto = new ContentValues();
-            producto.put("compra_id", compraId);
-            producto.put("nombre", productos.get(i));
-            producto.put("precio", precios.get(i));
-            db.insert("compra_productos", null, producto);
-        }
-
-        for (int i = 0; i < nombres.size(); i++) {
-            ContentValues deuda = new ContentValues();
-            deuda.put("compra_id", compraId);
-            deuda.put("nombre", nombres.get(i));
-            deuda.put("monto", montos.get(i));
-            Integer pagada = yaPagaron.get(nombres.get(i).toLowerCase());
-            deuda.put("pagada", pagada == null ? 0 : pagada);
-            Integer contactoId = contactos.get(nombres.get(i).toLowerCase());
-            if (contactoId != null) {
-                deuda.put("contacto_id", contactoId);
-            }
-            db.insert("deudas", null, deuda);
-        }
+        compraRepository.guardarGastoCompartido(editandoId, productos, nombres, montos, contactos);
 
         Toast.makeText(this, editandoId == null ? "Gasto compartido guardado" : "Cambios guardados", Toast.LENGTH_SHORT).show();
         terminarEdicion();
@@ -405,7 +360,6 @@ public class DeudasActivity extends AppCompatActivity {
     private void terminarEdicion() {
         editandoId = null;
         productos.clear();
-        precios.clear();
         personas.clear();
         montosPersonas.clear();
         txtPersonas.setText("");
@@ -458,13 +412,13 @@ public class DeudasActivity extends AppCompatActivity {
 
         EditText nombre = new EditText(this);
         nombre.setHint("Producto");
-        nombre.setText(productos.get(posicion));
+        nombre.setText(productos.get(posicion).getNombre());
         vista.addView(nombre);
 
         EditText precio = new EditText(this);
         precio.setHint("Precio $");
         precio.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        precio.setText(String.valueOf(Math.round(precios.get(posicion))));
+        precio.setText(String.valueOf(Math.round(productos.get(posicion).getPrecio())));
         vista.addView(precio);
 
         new AlertDialog.Builder(this)
@@ -477,8 +431,8 @@ public class DeudasActivity extends AppCompatActivity {
                         Toast.makeText(this, "Falta el producto o un precio valido", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    productos.set(posicion, nuevoNombre);
-                    precios.set(posicion, nuevoPrecio);
+                    productos.get(posicion).setNombre(nuevoNombre);
+                    productos.get(posicion).setPrecio(nuevoPrecio);
                     mostrarProductos();
                 })
                 .setNegativeButton("Cancelar", null)
@@ -507,11 +461,7 @@ public class DeudasActivity extends AppCompatActivity {
                 .setTitle("¿Borrar esta operación?")
                 .setMessage(descripcion + "\n\nSe borran sus productos y lo que cada persona debía. No se puede deshacer.")
                 .setPositiveButton("Borrar", (d, w) -> {
-                    SQLiteDatabase db = dbHelper.getWritableDatabase();
-                    String[] arg = {String.valueOf(compraId)};
-                    db.delete("deudas", "compra_id = ?", arg);
-                    db.delete("compra_productos", "compra_id = ?", arg);
-                    db.delete("compras", "id = ?", arg);
+                    compraRepository.borrar(compraId);
                     if (editandoId != null && editandoId == compraId) {
                         terminarEdicion();
                     }
@@ -525,33 +475,14 @@ public class DeudasActivity extends AppCompatActivity {
     // Carga una operacion guardada en el formulario para cambiarla
     private void editarOperacion(int compraId, String descripcion) {
         terminarEdicion();
-        String[] arg = {String.valueOf(compraId)};
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-
-        Cursor c = db.rawQuery("SELECT nombre, precio FROM compra_productos WHERE compra_id = ?", arg);
-        while (c.moveToNext()) {
-            productos.add(c.getString(0));
-            precios.add(c.getDouble(1));
-        }
-        c.close();
-        if (productos.isEmpty()) {
-            // Operaciones antiguas sin productos: se usa la descripcion y el total
-            c = db.rawQuery("SELECT descripcion, monto FROM compras WHERE id = ?", arg);
-            if (c.moveToFirst()) {
-                productos.add(c.getString(0));
-                precios.add(c.getDouble(1));
-            }
-            c.close();
-        }
+        productos.addAll(compraRepository.productosDe(compraId));
 
         ArrayList<String> nombres = new ArrayList<>();
         ArrayList<Double> montos = new ArrayList<>();
-        c = db.rawQuery("SELECT COALESCE(d.nombre, ct.nombre, 'Persona'), d.monto FROM deudas d LEFT JOIN contactos ct ON ct.id = d.contacto_id WHERE d.compra_id = ?", arg);
-        while (c.moveToNext()) {
-            nombres.add(c.getString(0));
-            montos.add(c.getDouble(1));
+        for (Deuda deuda : deudaDAO.listarPorCompra(compraId)) {
+            nombres.add(deuda.getNombre());
+            montos.add(deuda.getMonto());
         }
-        c.close();
 
         // Si todos son "Persona N" con el mismo monto, era partes iguales
         boolean iguales = !nombres.isEmpty();
@@ -569,7 +500,7 @@ public class DeudasActivity extends AppCompatActivity {
             montosPersonas.addAll(montos);
         }
 
-        editandoId = (long) compraId;
+        editandoId = compraId;
         txtEditando.setText("✏️ Editando: " + descripcion);
         panelEditando.setVisibility(View.VISIBLE);
         btnGuardar.setText("Guardar cambios");
@@ -582,32 +513,24 @@ public class DeudasActivity extends AppCompatActivity {
     private void cargarOperaciones() {
         listaOperaciones.removeAllViews();
 
-        String filtro = "";
+        int filtro = ICompra.TODAS;
         if (rbPendientes.isChecked()) {
-            filtro = " HAVING SUM(d.pagada) < COUNT(d.id)";
+            filtro = ICompra.PENDIENTES;
         } else if (rbCompletadas.isChecked()) {
-            filtro = " HAVING SUM(d.pagada) = COUNT(d.id)";
+            filtro = ICompra.COMPLETAS;
         }
 
-        Cursor c = dbHelper.getReadableDatabase().rawQuery(
-                "SELECT co.id, co.descripcion, co.monto, co.fecha, COUNT(d.id), SUM(d.pagada), " +
-                        "SUM(CASE WHEN d.pagada = 0 THEN d.monto ELSE 0 END) " +
-                        "FROM compras co JOIN deudas d ON d.compra_id = co.id " +
-                        "GROUP BY co.id" + filtro + " ORDER BY co.id DESC", null);
-
-        while (c.moveToNext()) {
-            int compraId = c.getInt(0);
-            String descripcion = c.getString(1);
-            int cantidad = c.getInt(4);
-            int pagaron = c.getInt(5);
-            boolean completa = pagaron == cantidad;
+        for (GastoCompartido gasto : compraDAO.listarGastosCompartidos(filtro)) {
+            int compraId = gasto.getCompraId();
+            String descripcion = gasto.getDescripcion();
+            boolean completa = gasto.estaCompleto();
 
             TextView fila = new TextView(this);
             String estado = completa ? "✅ Completa" : "⏳ Pendiente";
             String detalle = completa
-                    ? "Pagaron todos (" + cantidad + ")"
-                    : "Pagaron " + pagaron + " de " + cantidad + " · falta cobrar $" + Math.round(c.getDouble(6));
-            fila.setText(estado + "\n" + descripcion + "\nTotal $" + Math.round(c.getDouble(2)) + " · " + c.getString(3) + "\n" + detalle);
+                    ? "Pagaron todos (" + gasto.getPersonas() + ")"
+                    : "Pagaron " + gasto.getPagaron() + " de " + gasto.getPersonas() + " · falta cobrar $" + Math.round(gasto.getFaltaCobrar());
+            fila.setText(estado + "\n" + descripcion + "\nTotal $" + Math.round(gasto.getTotal()) + " · " + gasto.getFecha() + "\n" + detalle);
             fila.setTextColor(ContextCompat.getColor(this, completa ? R.color.verde_oscuro : R.color.rojo));
             fila.setTextSize(15);
             fila.setBackgroundResource(R.drawable.bg_tarjeta);
@@ -621,7 +544,6 @@ public class DeudasActivity extends AppCompatActivity {
             params.topMargin = dp(8);
             listaOperaciones.addView(fila, params);
         }
-        c.close();
 
         if (listaOperaciones.getChildCount() == 0) {
             TextView vacio = new TextView(this);
@@ -634,32 +556,20 @@ public class DeudasActivity extends AppCompatActivity {
 
     // Marcar quien ya pago su parte de una operacion
     private void marcarPagos(int compraId, String descripcion) {
-        ArrayList<Integer> ids = new ArrayList<>();
+        ArrayList<Deuda> deudas = deudaDAO.listarPorCompra(compraId);
         ArrayList<String> textos = new ArrayList<>();
-        ArrayList<Boolean> pagadas = new ArrayList<>();
-        Cursor c = dbHelper.getReadableDatabase().rawQuery(
-                "SELECT d.id, COALESCE(d.nombre, ct.nombre, 'Persona'), d.monto, d.pagada " +
-                        "FROM deudas d LEFT JOIN contactos ct ON ct.id = d.contacto_id WHERE d.compra_id = ?",
-                new String[]{String.valueOf(compraId)});
-        while (c.moveToNext()) {
-            ids.add(c.getInt(0));
-            textos.add(c.getString(1) + "   $" + Math.round(c.getDouble(2)));
-            pagadas.add(c.getInt(3) == 1);
-        }
-        c.close();
-
-        boolean[] marcados = new boolean[pagadas.size()];
-        for (int i = 0; i < marcados.length; i++) {
-            marcados[i] = pagadas.get(i);
+        boolean[] marcados = new boolean[deudas.size()];
+        for (int i = 0; i < deudas.size(); i++) {
+            textos.add(deudas.get(i).getNombre() + "   $" + Math.round(deudas.get(i).getMonto()));
+            marcados[i] = deudas.get(i).isPagada();
         }
 
         new AlertDialog.Builder(this)
                 .setTitle("¿Quién ya pagó? (" + descripcion + ")")
                 .setMultiChoiceItems(textos.toArray(new String[0]), marcados, (d, which, isChecked) -> marcados[which] = isChecked)
                 .setPositiveButton("Guardar", (d, w) -> {
-                    SQLiteDatabase db = dbHelper.getWritableDatabase();
-                    for (int i = 0; i < ids.size(); i++) {
-                        db.execSQL("UPDATE deudas SET pagada = ? WHERE id = ?", new Object[]{marcados[i] ? 1 : 0, ids.get(i)});
+                    for (int i = 0; i < deudas.size(); i++) {
+                        deudaDAO.marcarPagada(deudas.get(i).getId(), marcados[i]);
                     }
                     cargarOperaciones();
                 })

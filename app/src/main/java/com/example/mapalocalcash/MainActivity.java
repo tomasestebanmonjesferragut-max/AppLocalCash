@@ -1,7 +1,6 @@
 package com.example.mapalocalcash;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.widget.TextView;
 
@@ -12,10 +11,14 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.mapalocalcash.dao.CuentaDAO;
+import com.example.mapalocalcash.dao.DeudaDAO;
+
 // Panel principal: resumen y acciones. El mapa se abre con el boton de abajo.
 public class MainActivity extends AppCompatActivity {
 
-    private DBHelper dbHelper;
+    private CuentaDAO cuentaDAO;
+    private DeudaDAO deudaDAO;
     private TextView txtSaldoTotal;
     private TextView txtTeDeben;
 
@@ -30,11 +33,12 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        dbHelper = new DBHelper(this);
+        cuentaDAO = new CuentaDAO(this);
+        deudaDAO = new DeudaDAO(this);
         txtSaldoTotal = findViewById(R.id.txtSaldoTotal);
         txtTeDeben = findViewById(R.id.txtTeDeben);
 
-        findViewById(R.id.btnMovimiento).setOnClickListener(v -> DialogoMovimiento.mostrar(this, dbHelper, null, this::cargarResumen));
+        findViewById(R.id.btnMovimiento).setOnClickListener(v -> DialogoMovimiento.mostrar(this, null, this::cargarResumen));
         findViewById(R.id.btnCuentas).setOnClickListener(v -> startActivity(new Intent(this, CuentasActivity.class)));
         findViewById(R.id.btnContactos).setOnClickListener(v -> startActivity(new Intent(this, ContactosActivity.class)));
         findViewById(R.id.btnCompras).setOnClickListener(v -> startActivity(new Intent(this, ComprasActivity.class)));
@@ -50,15 +54,8 @@ public class MainActivity extends AppCompatActivity {
 
     // Saldo de todas las cuentas y total que te deben
     private void cargarResumen() {
-        Cursor c = dbHelper.getReadableDatabase().rawQuery("SELECT IFNULL(SUM(saldo), 0) FROM cuentas", null);
-        c.moveToFirst();
-        double saldo = c.getDouble(0);
-        c.close();
-
-        c = dbHelper.getReadableDatabase().rawQuery("SELECT IFNULL(SUM(monto), 0) FROM deudas WHERE pagada = 0", null);
-        c.moveToFirst();
-        double teDeben = c.getDouble(0);
-        c.close();
+        double saldo = cuentaDAO.saldoTotal();
+        double teDeben = deudaDAO.totalPendiente();
 
         txtSaldoTotal.setText("$" + Math.round(saldo));
         txtSaldoTotal.setTextColor(ContextCompat.getColor(this, saldo >= 0 ? R.color.verde_oscuro : R.color.rojo));

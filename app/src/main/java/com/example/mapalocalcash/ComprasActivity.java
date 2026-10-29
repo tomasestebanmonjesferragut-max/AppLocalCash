@@ -1,7 +1,5 @@
 package com.example.mapalocalcash;
 
-import android.content.ContentValues;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.ArrayAdapter;
@@ -15,22 +13,27 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.mapalocalcash.dao.CompraDAO;
+import com.example.mapalocalcash.dao.ContactoDAO;
+import com.example.mapalocalcash.model.Compra;
+import com.example.mapalocalcash.model.Contacto;
+import com.example.mapalocalcash.repository.CompraRepository;
+
 import java.util.ArrayList;
 
 public class ComprasActivity extends AppCompatActivity {
 
-    private DBHelper dbHelper;
+    private CompraDAO compraDAO;
     private ListView lista;
     private TextView txtTotalAgendado;
-    private ArrayList<Integer> idsCompras = new ArrayList<>();
-    private ArrayList<Boolean> agendadas = new ArrayList<>();
+    private ArrayList<Compra> compras = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_compras);
 
-        dbHelper = new DBHelper(this);
+        compraDAO = new CompraDAO(this);
         EditText txtDescripcion = findViewById(R.id.txtDescripcion);
         EditText txtMonto = findViewById(R.id.txtMonto);
         EditText txtFecha = findViewById(R.id.txtFecha);
@@ -40,16 +43,12 @@ public class ComprasActivity extends AppCompatActivity {
         txtTotalAgendado = findViewById(R.id.txtTotalAgendado);
 
         // Contactos para compartir la compra (el primero es "sin contacto")
-        ArrayList<Integer> idsContactos = new ArrayList<>();
+        ArrayList<Contacto> contactos = new ContactoDAO(this).listar();
         ArrayList<String> nombres = new ArrayList<>();
-        idsContactos.add(-1);
         nombres.add("Sin contacto");
-        Cursor c = dbHelper.getReadableDatabase().rawQuery("SELECT id, nombre FROM contactos ORDER BY nombre", null);
-        while (c.moveToNext()) {
-            idsContactos.add(c.getInt(0));
-            nombres.add(c.getString(1));
+        for (Contacto contacto : contactos) {
+            nombres.add(contacto.getNombre());
         }
-        c.close();
         spContacto.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, nombres));
 
         findViewById(R.id.btnGuardar).setOnClickListener(v -> {
@@ -60,16 +59,9 @@ public class ComprasActivity extends AppCompatActivity {
                 return;
             }
 
-            ContentValues valores = new ContentValues();
-            valores.put("descripcion", descripcion);
-            valores.put("monto", monto);
-            valores.put("fecha", txtFecha.getText().toString());
-            valores.put("agendada", chkAgendada.isChecked() ? 1 : 0);
-            int contactoId = idsContactos.get(spContacto.getSelectedItemPosition());
-            if (contactoId != -1) {
-                valores.put("contacto_id", contactoId);
-            }
-            dbHelper.getWritableDatabase().insert("compras", null, valores);
+            int posicion = spContacto.getSelectedItemPosition();
+            Integer contactoId = posicion == 0 ? null : contactos.get(posicion - 1).getId();
+            compraDAO.crear(new Compra(descripcion, monto, txtFecha.getText().toString(), chkAgendada.isChecked(), contactoId));
 
             txtDescripcion.setText("");
             txtMonto.setText("");
@@ -81,18 +73,17 @@ public class ComprasActivity extends AppCompatActivity {
 
         // Al tocar una compra: marcarla como realizada (si esta agendada) o borrarla
         lista.setOnItemClickListener((parent, view, position, id) -> {
-            int compraId = idsCompras.get(position);
-            boolean agendada = agendadas.get(position);
-            String[] opciones = agendada
+            Compra compra = compras.get(position);
+            String[] opciones = compra.isAgendada()
                     ? new String[]{"✅ Marcar como realizada", "🗑️ Borrar"}
                     : new String[]{"🗑️ Borrar"};
             new AlertDialog.Builder(this)
                     .setItems(opciones, (d, which) -> {
-                        if (agendada && which == 0) {
-                            dbHelper.getWritableDatabase().execSQL("UPDATE compras SET agendada = 0 WHERE id = ?", new Object[]{compraId});
+                        if (compra.isAgendada() && which == 0) {
+                            compraDAO.marcarRealizada(compra.getId());
                             cargar();
                         } else {
-                            borrar(compraId);
+                            borrar(compra.getId());
                         }
                     })
                     .show();
@@ -107,11 +98,7 @@ public class ComprasActivity extends AppCompatActivity {
                 .setTitle("¿Borrar esta compra?")
                 .setMessage("Si es un gasto compartido, se borran también sus productos y lo que cada persona debía.")
                 .setPositiveButton("Borrar", (d, w) -> {
-                    android.database.sqlite.SQLiteDatabase db = dbHelper.getWritableDatabase();
-                    String[] arg = {String.valueOf(compraId)};
-                    db.delete("deudas", "compra_id = ?", arg);
-                    db.delete("compra_productos", "compra_id = ?", arg);
-                    db.delete("compras", "id = ?", arg);
+                    new CompraRepository(this).borrar(compraId);
                     Toast.makeText(this, "Compra borrada", Toast.LENGTH_SHORT).show();
                     cargar();
                 })
@@ -120,29 +107,22 @@ public class ComprasActivity extends AppCompatActivity {
     }
 
     private void cargar() {
-        idsCompras.clear();
-        agendadas.clear();
+        compras = compraDAO.listar();
         ArrayList<CharSequence> textos = new ArrayList<>();
         double totalAgendado = 0;
 
-        Cursor c = dbHelper.getReadableDatabase().rawQuery(
-                "SELECT co.id, co.descripcion, co.monto, co.fecha, co.agendada, ct.nombre FROM compras co LEFT JOIN contactos ct ON ct.id = co.contacto_id ORDER BY co.agendada DESC, co.id DESC", null);
-        while (c.moveToNext()) {
-            boolean agendada = c.getInt(4) == 1;
+        for (Compra compra : compras) {
             // Las compras son gastos: monto en rojo
-            String antes = (agendada ? "📅 Agendada · " : "") + c.getString(3) + " " + c.getString(1) + "  ";
-            CharSequence texto = Monto.conColor(this, antes, "− $" + Math.round(c.getDouble(2)), false);
-            if (!c.isNull(5)) {
-                texto = TextUtils.concat(texto, "  (con " + c.getString(5) + ")");
+            String antes = (compra.isAgendada() ? "📅 Agendada · " : "") + compra.getFecha() + " " + compra.getDescripcion() + "  ";
+            CharSequence texto = Monto.conColor(this, antes, "− $" + Math.round(compra.getMonto()), false);
+            if (compra.getContactoNombre() != null) {
+                texto = TextUtils.concat(texto, "  (con " + compra.getContactoNombre() + ")");
             }
-            if (agendada) {
-                totalAgendado += c.getDouble(2);
+            if (compra.isAgendada()) {
+                totalAgendado += compra.getMonto();
             }
-            idsCompras.add(c.getInt(0));
-            agendadas.add(agendada);
             textos.add(texto);
         }
-        c.close();
 
         txtTotalAgendado.setText("Monto a apartar para compras agendadas: $" + Math.round(totalAgendado));
         lista.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, textos));
