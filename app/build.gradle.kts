@@ -38,6 +38,9 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.material)
     testImplementation(libs.junit)
+    // Pruebas de la base de datos SQLite en el PC (sin telefono)
+    testImplementation("org.robolectric:robolectric:4.16")
+    testImplementation("androidx.test:core:1.6.1")
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
 
