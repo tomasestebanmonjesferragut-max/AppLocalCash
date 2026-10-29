@@ -5,8 +5,8 @@ import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -23,7 +23,11 @@ import com.example.mapalocalcash.model.Movimiento;
 import com.example.mapalocalcash.repository.MovimientoRepository;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMapOptions;
+import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
@@ -72,7 +76,7 @@ public class DialogoMovimiento {
         }
         ArrayList<String> nombresCuentas = new ArrayList<>();
         for (Cuenta cuenta : cuentas) {
-            nombresCuentas.add(cuenta.getNombre());
+            nombresCuentas.add(cuenta.getNombre() + "   ($" + Math.round(cuenta.getSaldo()) + ")");
         }
 
         View vista = activity.getLayoutInflater().inflate(R.layout.dialog_movimiento, null);
@@ -80,10 +84,10 @@ public class DialogoMovimiento {
         RadioButton rbIngreso = vista.findViewById(R.id.rbIngreso);
         EditText txtMonto = vista.findViewById(R.id.txtMonto);
         EditText txtDescripcion = vista.findViewById(R.id.txtDescripcion);
-        CheckBox chkUbicacion = vista.findViewById(R.id.chkUbicacion);
         View panelUbicacion = vista.findViewById(R.id.panelUbicacion);
         View panelLugar = vista.findViewById(R.id.panelLugar);
         TextView txtDireccion = vista.findViewById(R.id.txtDireccion);
+        FrameLayout contenedorMiniMapa = vista.findViewById(R.id.contenedorMiniMapa);
 
         spCuenta.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_spinner_dropdown_item, nombresCuentas));
 
@@ -98,6 +102,12 @@ public class DialogoMovimiento {
             descartarBorrador();
         }
 
+        // Mini mapa (modo liviano: una imagen del mapa con el marcador)
+        MapView miniMapa = new MapView(activity, new GoogleMapOptions().liteMode(true).mapToolbarEnabled(false));
+        miniMapa.onCreate(null);
+        miniMapa.onResume();
+        contenedorMiniMapa.addView(miniMapa);
+
         // Lugar elegido (arreglo para poder cambiarlo desde los botones)
         LatLng[] lugar = {punto};
         Runnable mostrarLugar = () -> {
@@ -105,8 +115,14 @@ public class DialogoMovimiento {
             panelLugar.setVisibility(hayLugar ? View.VISIBLE : View.GONE);
             panelUbicacion.setVisibility(hayLugar ? View.GONE : View.VISIBLE);
             if (hayLugar) {
+                LatLng aqui = lugar[0];
+                miniMapa.getMapAsync(mapa -> {
+                    mapa.clear();
+                    mapa.addMarker(new MarkerOptions().position(aqui));
+                    mapa.moveCamera(CameraUpdateFactory.newLatLngZoom(aqui, 16));
+                });
                 txtDireccion.setText("Buscando la dirección…");
-                Direccion.buscar(activity, lugar[0], txtDireccion::setText);
+                Direccion.buscar(activity, aqui, direccion -> txtDireccion.setText("📍 " + direccion));
             }
         };
         mostrarLugar.run();
@@ -116,21 +132,33 @@ public class DialogoMovimiento {
             vista.findViewById(R.id.btnCambiarLugar).setVisibility(View.GONE);
         }
 
-        chkUbicacion.setOnCheckedChangeListener((boton, marcado) -> {
-            if (marcado && !tienePermisoUbicacion(activity)) {
-                boton.setChecked(false);
-                ActivityCompat.requestPermissions(activity, new String[]{
-                        Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 2);
-                Toast.makeText(activity, "Acepta el permiso de ubicación y vuelve a marcar la opción", Toast.LENGTH_LONG).show();
-            }
-        });
-
         AlertDialog dialogo = new AlertDialog.Builder(activity)
                 .setTitle("Nuevo movimiento")
                 .setView(vista)
                 .setPositiveButton("Guardar", null) // se asigna abajo para no cerrar si falta el monto
                 .setNegativeButton("Cancelar", null)
                 .create();
+        dialogo.setOnDismissListener(d -> miniMapa.onDestroy());
+
+        // Mi ubicacion actual: se busca al tiro y se muestra en la tarjeta
+        vista.findViewById(R.id.btnMiUbicacion).setOnClickListener(v -> {
+            if (!tienePermisoUbicacion(activity)) {
+                ActivityCompat.requestPermissions(activity, new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 2);
+                Toast.makeText(activity, "Acepta el permiso de ubicación y vuelve a tocar el botón", Toast.LENGTH_LONG).show();
+                return;
+            }
+            panelUbicacion.setVisibility(View.GONE);
+            panelLugar.setVisibility(View.VISIBLE);
+            txtDireccion.setText("Buscando tu ubicación…");
+            buscarMiUbicacion(activity, aqui -> {
+                if (aqui == null) {
+                    Toast.makeText(activity, "No se pudo obtener tu ubicación. Activa el GPS e intenta otra vez.", Toast.LENGTH_LONG).show();
+                }
+                lugar[0] = aqui;
+                mostrarLugar.run();
+            });
+        });
 
         // Ir al mapa: se guarda lo escrito para recuperarlo al volver
         View.OnClickListener abrirMapa = v -> {
@@ -143,6 +171,10 @@ public class DialogoMovimiento {
         };
         vista.findViewById(R.id.btnElegirMapa).setOnClickListener(abrirMapa);
         vista.findViewById(R.id.btnCambiarLugar).setOnClickListener(abrirMapa);
+        if (irAlMapa != null) {
+            // Tocar el mini mapa tambien abre el mapa grande para cambiar el lugar
+            miniMapa.getMapAsync(mapa -> mapa.setOnMapClickListener(p -> abrirMapa.onClick(miniMapa)));
+        }
         vista.findViewById(R.id.btnQuitarLugar).setOnClickListener(v -> {
             lugar[0] = null;
             mostrarLugar.run();
@@ -153,46 +185,32 @@ public class DialogoMovimiento {
         // Guardar: si falta el monto, avisa y el formulario sigue abierto
         dialogo.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             Double monto = Monto.leer(txtMonto.getText().toString());
-            if (monto == null) {
+            if (monto == null || monto <= 0) {
                 txtMonto.setError("Escribe un monto valido");
                 txtMonto.requestFocus();
                 return;
             }
-            int cuentaId = cuentas.get(spCuenta.getSelectedItemPosition()).getId();
-            String tipo = rbIngreso.isChecked() ? Movimiento.INGRESO : Movimiento.EGRESO;
-            String descripcion = txtDescripcion.getText().toString();
+            Movimiento movimiento = new Movimiento(
+                    cuentas.get(spCuenta.getSelectedItemPosition()).getId(),
+                    rbIngreso.isChecked() ? Movimiento.INGRESO : Movimiento.EGRESO,
+                    monto,
+                    txtDescripcion.getText().toString(),
+                    lugar[0] == null ? null : lugar[0].latitude,
+                    lugar[0] == null ? null : lugar[0].longitude);
+            new MovimientoRepository(activity).registrar(movimiento);
+            Toast.makeText(activity, movimiento.tieneUbicacion() ? "Movimiento guardado en el mapa 📍" : "Movimiento guardado", Toast.LENGTH_SHORT).show();
             dialogo.dismiss();
-
-            if (lugar[0] != null) {
-                guardar(activity, new Movimiento(cuentaId, tipo, monto, descripcion, lugar[0].latitude, lugar[0].longitude), alGuardar);
-            } else if (chkUbicacion.isChecked()) {
-                guardarConMiUbicacion(activity, new Movimiento(cuentaId, tipo, monto, descripcion, null, null), alGuardar);
-            } else {
-                guardar(activity, new Movimiento(cuentaId, tipo, monto, descripcion, null, null), alGuardar);
-            }
+            alGuardar.run();
         });
     }
 
-    private static void guardar(AppCompatActivity activity, Movimiento movimiento, Runnable alGuardar) {
-        new MovimientoRepository(activity).registrar(movimiento);
-        Toast.makeText(activity, movimiento.tieneUbicacion() ? "Movimiento guardado en el mapa 📍" : "Movimiento guardado", Toast.LENGTH_SHORT).show();
-        alGuardar.run();
-    }
-
-    // Pide la ubicacion actual al GPS y guarda el movimiento ahi (sin ubicacion si no se pudo obtener)
+    // Pide la ubicacion actual al GPS. Entrega null si no se pudo obtener.
     @SuppressLint("MissingPermission")
-    private static void guardarConMiUbicacion(AppCompatActivity activity, Movimiento sinUbicacion, Runnable alGuardar) {
+    private static void buscarMiUbicacion(AppCompatActivity activity, Consumer<LatLng> alEncontrar) {
         LocationServices.getFusedLocationProviderClient(activity).getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                .addOnSuccessListener(location -> {
-                    if (location == null) {
-                        Toast.makeText(activity, "No se pudo obtener tu ubicación (activa el GPS). Se guardó sin ubicación.", Toast.LENGTH_LONG).show();
-                        guardar(activity, sinUbicacion, alGuardar);
-                    } else {
-                        guardar(activity, new Movimiento(sinUbicacion.getCuentaId(), sinUbicacion.getTipo(), sinUbicacion.getMonto(),
-                                sinUbicacion.getDescripcion(), location.getLatitude(), location.getLongitude()), alGuardar);
-                    }
-                })
-                .addOnFailureListener(e -> guardar(activity, sinUbicacion, alGuardar));
+                .addOnSuccessListener(location -> alEncontrar.accept(
+                        location == null ? null : new LatLng(location.getLatitude(), location.getLongitude())))
+                .addOnFailureListener(e -> alEncontrar.accept(null));
     }
 
     private static boolean tienePermisoUbicacion(AppCompatActivity activity) {

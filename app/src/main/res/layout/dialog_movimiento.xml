@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -7,26 +8,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingHorizontal="20dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp">
 
-        <TextView
-            style="@style/Ayuda"
-            android:layout_marginBottom="8dp"
-            android:text="Egreso = gastaste dinero. Ingreso = recibiste dinero. El saldo de la cuenta se actualiza solo." />
-
+        <!-- Tipo: dos tarjetas, la elegida se pinta -->
         <TextView
             style="@style/TituloSeccion"
-            android:text="Cuenta" />
-
-        <Spinner
-            android:id="@+id/spCuenta"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <TextView
-            style="@style/TituloSeccion"
-            android:layout_marginTop="8dp"
-            android:text="Tipo" />
+            android:text="¿Qué pasó con tu dinero?" />
 
         <RadioGroup
             android:id="@+id/rgTipo"
@@ -38,65 +27,123 @@
                 android:id="@+id/rbEgreso"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
                 android:layout_weight="1"
-                android:buttonTint="@color/rojo"
+                android:background="@drawable/bg_opcion_egreso"
+                android:button="@null"
                 android:checked="true"
-                android:text="➖ Egreso\n(resta)"
+                android:gravity="center"
+                android:paddingVertical="14dp"
+                android:text="➖\nGasté\n(egreso)"
                 android:textColor="@color/rojo"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
             <RadioButton
                 android:id="@+id/rbIngreso"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                android:buttonTint="@color/verde"
-                android:text="➕ Ingreso\n(suma)"
+                android:background="@drawable/bg_opcion_ingreso"
+                android:button="@null"
+                android:gravity="center"
+                android:paddingVertical="14dp"
+                android:text="➕\nRecibí\n(ingreso)"
                 android:textColor="@color/verde_oscuro"
+                android:textSize="15sp"
                 android:textStyle="bold" />
         </RadioGroup>
 
-        <EditText
-            android:id="@+id/txtMonto"
+        <!-- Monto grande con $ -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:hint="Monto"
+            app:prefixText="$ ">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/txtMonto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:hint="Monto $"
-            android:inputType="numberDecimal" />
+            android:hint="Descripción (ej: almuerzo, sueldo)">
 
-        <EditText
-            android:id="@+id/txtDescripcion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Descripción (ej: almuerzo, sueldo)" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/txtDescripcion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Cuenta -->
         <TextView
             style="@style/TituloSeccion"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="14dp"
+            android:text="💳 Cuenta" />
+
+        <Spinner
+            android:id="@+id/spCuenta"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_campo"
+            android:paddingHorizontal="8dp" />
+
+        <TextView
+            style="@style/Ayuda"
+            android:layout_marginTop="4dp"
+            android:text="El saldo de la cuenta se actualiza solo." />
+
+        <!-- Ubicacion -->
+        <TextView
+            style="@style/TituloSeccion"
+            android:layout_marginTop="14dp"
             android:text="📍 Ubicación (opcional)" />
 
-        <!-- Sin lugar elegido: usar el GPS o ir al mapa a elegirlo -->
+        <!-- Sin lugar: dos formas de ponerlo -->
         <LinearLayout
             android:id="@+id/panelUbicacion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
-            <CheckBox
-                android:id="@+id/chkUbicacion"
-                android:layout_width="wrap_content"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMiUbicacion"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Usar mi ubicación actual" />
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:paddingVertical="14dp"
+                android:text="📍\nMi ubicación\nactual"
+                android:textSize="13sp"
+                app:cornerRadius="14dp" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnElegirMapa"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="match_parent"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="🗺️ Elegir el lugar en el mapa" />
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:paddingVertical="14dp"
+                android:text="🗺️\nElegir en\nel mapa"
+                android:textSize="13sp"
+                app:cornerRadius="14dp" />
         </LinearLayout>
 
-        <!-- Con lugar elegido: muestra la direccion y deja cambiarlo o quitarlo -->
+        <!-- Con lugar: mini mapa, direccion y opciones para cambiarlo o quitarlo -->
         <LinearLayout
             android:id="@+id/panelLugar"
             android:layout_width="match_parent"
@@ -104,28 +151,35 @@
             android:background="@drawable/bg_tarjeta"
             android:backgroundTint="@color/verde_claro"
             android:orientation="vertical"
-            android:padding="12dp"
+            android:padding="10dp"
             android:visibility="gone">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📍 Lugar elegido"
-                android:textColor="@color/verde_oscuro"
-                android:textStyle="bold" />
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/tarjetaMiniMapa"
+                android:layout_width="match_parent"
+                android:layout_height="130dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <FrameLayout
+                    android:id="@+id/contenedorMiniMapa"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:id="@+id/txtDireccion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="8dp"
                 android:text="Buscando la dirección…"
-                android:textColor="@color/texto" />
+                android:textColor="@color/texto"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
                 android:orientation="horizontal">
 
                 <Button
@@ -134,7 +188,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="🗺️ Cambiar en el mapa" />
+                    android:text="🗺️ Cambiar lugar" />
 
                 <Button
                     android:id="@+id/btnQuitarLugar"
