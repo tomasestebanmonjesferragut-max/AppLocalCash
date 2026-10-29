@@ -63,6 +63,10 @@ public class DeudasActivity extends AppCompatActivity {
     private ArrayList<Double> montosPersonas = new ArrayList<>();
     // Nombre del contacto (en minusculas) -> id, para enlazar con la agenda
     private HashMap<String, Integer> contactos = new HashMap<>();
+    private ArrayList<String> nombresContactos = new ArrayList<>();
+    // Contactos elegidos para partes iguales (el resto se guarda como "Persona N")
+    private ArrayList<String> nombresIguales = new ArrayList<>();
+    private TextView txtNombresIguales;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +100,8 @@ public class DeudasActivity extends AppCompatActivity {
         txtEditando = findViewById(R.id.txtEditando);
         btnGuardar = findViewById(R.id.btnGuardar);
         scroll = findViewById(R.id.scroll);
+        txtNombresIguales = findViewById(R.id.txtNombresIguales);
+        findViewById(R.id.btnElegirContactos).setOnClickListener(v -> elegirContactosIguales());
 
         // Sugerir nombres de la agenda de contactos
         ArrayList<String> nombres = new ArrayList<>();
@@ -103,6 +109,7 @@ public class DeudasActivity extends AppCompatActivity {
         while (c.moveToNext()) {
             contactos.put(c.getString(1).trim().toLowerCase(), c.getInt(0));
             nombres.add(c.getString(1));
+            nombresContactos.add(c.getString(1));
         }
         c.close();
         txtNombrePersona.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, nombres));
@@ -318,7 +325,7 @@ public class DeudasActivity extends AppCompatActivity {
                 return;
             }
             for (int i = 1; i <= n; i++) {
-                nombres.add("Persona " + i);
+                nombres.add(i <= nombresIguales.size() ? nombresIguales.get(i - 1) : "Persona " + i);
                 montos.add(total() / n);
             }
         } else {
@@ -402,11 +409,45 @@ public class DeudasActivity extends AppCompatActivity {
         personas.clear();
         montosPersonas.clear();
         txtPersonas.setText("");
+        nombresIguales.clear();
+        txtNombresIguales.setText("");
         rbIguales.setChecked(true);
         panelEditando.setVisibility(View.GONE);
         btnGuardar.setText("Guardar gasto compartido");
         mostrarPersonas();
         mostrarPasoDividir(false);
+    }
+
+    // Partes iguales: elegir contactos de la agenda. La cantidad de personas parte en los elegidos
+    // y se puede subir (los que sobran quedan como "Persona N").
+    private void elegirContactosIguales() {
+        if (nombresContactos.isEmpty()) {
+            Toast.makeText(this, "No tienes contactos. Agrégalos en 👥 Contactos", Toast.LENGTH_LONG).show();
+            return;
+        }
+        boolean[] marcados = new boolean[nombresContactos.size()];
+        for (int i = 0; i < marcados.length; i++) {
+            marcados[i] = nombresIguales.contains(nombresContactos.get(i));
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("¿Con quiénes divides?")
+                .setMultiChoiceItems(nombresContactos.toArray(new String[0]), marcados, (d, which, isChecked) -> marcados[which] = isChecked)
+                .setPositiveButton("Listo", (d, w) -> {
+                    nombresIguales.clear();
+                    for (int i = 0; i < marcados.length; i++) {
+                        if (marcados[i]) {
+                            nombresIguales.add(nombresContactos.get(i));
+                        }
+                    }
+                    txtNombresIguales.setText(nombresIguales.isEmpty() ? "" : "👥 " + String.join(", ", nombresIguales));
+                    Integer n = cantidadPersonas();
+                    if (n == null || n < nombresIguales.size()) {
+                        txtPersonas.setText(String.valueOf(nombresIguales.size()));
+                    }
+                    actualizarReparto();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     // Cambiar nombre o precio de un producto de la lista

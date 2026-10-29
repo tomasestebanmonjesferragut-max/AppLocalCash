@@ -190,6 +190,19 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
+                <Button
+                    android:id="@+id/btnElegirContactos"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="👥 Elegir contactos (opcional)" />
+
+                <TextView
+                    android:id="@+id/txtNombresIguales"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/texto_suave" />
+
                 <EditText
                     android:id="@+id/txtPersonas"
                     android:layout_width="match_parent"
@@ -225,7 +238,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
                         android:completionThreshold="1"
-                        android:hint="Nombre"
+                        android:hint="Nombre o contacto"
                         android:inputType="textPersonName" />
 
                     <EditText

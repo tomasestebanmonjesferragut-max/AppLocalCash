@@ -15,7 +15,7 @@
 
         <TextView
             style="@style/EncabezadoTexto"
-            android:text="Las personas con las que compartes compras o gastos. Después puedes dividir cuentas con ellas." />
+            android:text="Tu agenda: cada contacto con su número y cuánto te debe, sumando sus gastos compartidos." />
     </LinearLayout>
 
     <LinearLayout style="@style/Tarjeta">
@@ -28,7 +28,37 @@
             android:id="@+id/txtNombre"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Nombre del contacto" />
+            android:hint="Nombre"
+            android:inputType="textPersonName" />
+
+        <EditText
+            android:id="@+id/txtTelefono"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Número (ej: 912345678)"
+            android:inputType="phone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/txtMeDebe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="¿Te debe? $ (opcional)"
+                android:inputType="numberDecimal" />
+
+            <EditText
+                android:id="@+id/txtMotivo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:hint="Motivo (opcional)" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/btnAgregar"
@@ -45,6 +75,10 @@
         <TextView
             style="@style/TituloSeccion"
             android:text="Tu agenda" />
+
+        <TextView
+            style="@style/Ayuda"
+            android:text="Toca un contacto para llamarlo, anotar lo que te debe o marcar pagos." />
 
         <ListView
             android:id="@+id/lista"
