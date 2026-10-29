@@ -29,6 +29,7 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize">
         </activity>
+        <activity android:name=".MapaActivity" />
         <activity android:name=".CuentasActivity" />
         <activity android:name=".ContactosActivity" />
         <activity android:name=".ComprasActivity" />

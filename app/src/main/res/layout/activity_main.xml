@@ -1,103 +1,191 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/fondo"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <LinearLayout
-        android:id="@+id/encabezado"
-        style="@style/Encabezado"
-        android:layout_alignParentTop="true"
-        android:layout_margin="8dp">
-
-        <TextView
-            style="@style/EncabezadoTitulo"
-            android:text="💰 LocalCash" />
-
-        <TextView
-            style="@style/EncabezadoTexto"
-            android:text="Mantén presionado el mapa para registrar un gasto o ingreso en ese lugar." />
-
-        <TextView
-            style="@style/EncabezadoTexto"
-            android:layout_marginTop="8dp"
-            android:text="🟢 Ingreso (+)   🔴 Egreso (−)   🔵 Tú   🟡 Marcado"
-            android:textColor="@color/white" />
-    </LinearLayout>
-
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@+id/menu"
-        android:layout_below="@id/encabezado" />
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-    <LinearLayout
-        android:id="@+id/menu"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Encabezado con logo -->
+            <LinearLayout
+                style="@style/Encabezado"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="LocalCash"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/logo_icono" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/EncabezadoTitulo"
+                        android:text="LocalCash" />
+
+                    <TextView
+                        style="@style/EncabezadoTexto"
+                        android:text="¿Qué quieres hacer hoy?" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Resumen -->
+            <LinearLayout
+                style="@style/Tarjeta"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Ayuda"
+                        android:text="Saldo total" />
+
+                    <TextView
+                        android:id="@+id/txtSaldoTotal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$0"
+                        android:textColor="@color/verde_oscuro"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Ayuda"
+                        android:text="Te deben" />
+
+                    <TextView
+                        android:id="@+id/txtTeDeben"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="+ $0"
+                        android:textColor="@color/verde_oscuro"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Acciones -->
+            <TextView
+                style="@style/TituloSeccion"
+                android:layout_marginTop="16dp"
+                android:text="Acciones" />
+
+            <Button
+                android:id="@+id/btnMovimiento"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="14dp"
+                android:text="➕  Registrar gasto o ingreso"
+                android:textSize="16sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnCuentas"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingVertical="18dp"
+                    android:text="💳\nCuentas" />
+
+                <Button
+                    android:id="@+id/btnContactos"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:paddingVertical="18dp"
+                    android:text="👥\nContactos" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnCompras"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingVertical="18dp"
+                    android:text="🛒\nCompras" />
+
+                <Button
+                    android:id="@+id/btnDeudas"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:paddingVertical="18dp"
+                    android:text="🤝\nGastos compartidos" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/Ayuda"
+                android:layout_marginTop="12dp"
+                android:text="Tip: para guardar un gasto con su ubicación, abre el mapa y mantén presionado el lugar." />
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Boton fijo abajo para ver el mapa -->
+    <Button
+        android:id="@+id/btnVerMapa"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="8dp"
-        android:background="@drawable/bg_tarjeta"
-        android:orientation="vertical"
-        android:padding="8dp">
+        android:layout_margin="16dp"
+        android:backgroundTint="@color/azul"
+        android:paddingVertical="14dp"
+        android:text="🗺️  Ver mapa de movimientos"
+        android:textSize="16sp" />
 
-        <Button
-            android:id="@+id/btnMovimiento"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="➕  Nuevo movimiento (sin ubicación)" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnCuentas"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="💳 Cuentas" />
-
-            <Button
-                android:id="@+id/btnContactos"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:text="👥 Contactos" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnCompras"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="🛒 Compras" />
-
-            <Button
-                android:id="@+id/btnDeudas"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:text="🤝 Compartidos" />
-        </LinearLayout>
-    </LinearLayout>
-
-</RelativeLayout>
+</LinearLayout>
