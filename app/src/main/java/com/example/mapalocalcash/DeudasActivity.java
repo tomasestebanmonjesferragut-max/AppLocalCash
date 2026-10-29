@@ -29,6 +29,7 @@ import com.example.mapalocalcash.repository.CompraRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class DeudasActivity extends AppCompatActivity {
 
@@ -190,14 +191,6 @@ public class DeudasActivity extends AppCompatActivity {
         return suma;
     }
 
-    private double sumaPersonas() {
-        double suma = 0;
-        for (double m : montosPersonas) {
-            suma += m;
-        }
-        return suma;
-    }
-
     // Lista de productos: en el paso 1 se puede tocar uno para cambiar nombre/precio o quitarlo con ✕
     private void mostrarProductos() {
         boolean dividiendo = tarjetaDividir.getVisibility() == View.VISIBLE;
@@ -281,7 +274,11 @@ public class DeudasActivity extends AppCompatActivity {
         if (rbIguales.isChecked()) {
             Integer n = cantidadPersonas();
             if (total > 0 && n != null) {
-                txtCadaUno.setText("Cada persona paga $" + Monto.miles(total / n));
+                List<Double> partes = Reparto.partesIguales(total, n);
+                double primera = partes.get(0);
+                double ultima = partes.get(partes.size() - 1);
+                txtCadaUno.setText("Cada persona paga $" + Monto.miles(primera)
+                        + (ultima != primera ? " (la última $" + Monto.miles(ultima) + ")" : ""));
             } else {
                 txtCadaUno.setText("");
             }
@@ -289,7 +286,7 @@ public class DeudasActivity extends AppCompatActivity {
             return;
         }
 
-        double falta = total - sumaPersonas();
+        double falta = Reparto.falta(total, montosPersonas);
         if (personas.isEmpty()) {
             txtEstadoReparto.setText("");
         } else if (Math.abs(falta) < 0.5) {
@@ -331,14 +328,14 @@ public class DeudasActivity extends AppCompatActivity {
             }
             for (int i = 1; i <= n; i++) {
                 nombres.add(i <= nombresIguales.size() ? nombresIguales.get(i - 1) : "Persona " + i);
-                montos.add(total() / n);
             }
+            montos.addAll(Reparto.partesIguales(total(), n));
         } else {
             if (personas.isEmpty()) {
                 Toast.makeText(this, "Agrega al menos una persona", Toast.LENGTH_SHORT).show();
                 return;
             }
-            double falta = total() - sumaPersonas();
+            double falta = Reparto.falta(total(), montosPersonas);
             if (falta >= 0.5) {
                 Toast.makeText(this, "No alcanza el total: falta asignar $" + Monto.miles(falta), Toast.LENGTH_LONG).show();
                 return;
