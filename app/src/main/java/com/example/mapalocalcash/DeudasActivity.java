@@ -49,6 +49,13 @@ public class DeudasActivity extends AppCompatActivity {
     private View btnContinuar;
     private LinearLayout tarjetaDividir;
     private TextView txtTotalDividir;
+    private LinearLayout listaProductos;
+    private LinearLayout panelEditando;
+    private TextView txtEditando;
+    private Button btnGuardar;
+    private android.widget.ScrollView scroll;
+    // id de la operacion que se esta editando (null = operacion nueva)
+    private Long editandoId = null;
 
     private ArrayList<String> productos = new ArrayList<>();
     private ArrayList<Double> precios = new ArrayList<>();
@@ -84,6 +91,11 @@ public class DeudasActivity extends AppCompatActivity {
         btnContinuar = findViewById(R.id.btnContinuar);
         tarjetaDividir = findViewById(R.id.tarjetaDividir);
         txtTotalDividir = findViewById(R.id.txtTotalDividir);
+        listaProductos = findViewById(R.id.listaProductos);
+        panelEditando = findViewById(R.id.panelEditando);
+        txtEditando = findViewById(R.id.txtEditando);
+        btnGuardar = findViewById(R.id.btnGuardar);
+        scroll = findViewById(R.id.scroll);
 
         // Sugerir nombres de la agenda de contactos
         ArrayList<String> nombres = new ArrayList<>();
@@ -148,7 +160,8 @@ public class DeudasActivity extends AppCompatActivity {
         btnContinuar.setOnClickListener(v -> mostrarPasoDividir(true));
         findViewById(R.id.btnEditarProductos).setOnClickListener(v -> mostrarPasoDividir(false));
 
-        findViewById(R.id.btnGuardar).setOnClickListener(v -> guardar());
+        btnGuardar.setOnClickListener(v -> guardar());
+        findViewById(R.id.btnCancelarEdicion).setOnClickListener(v -> terminarEdicion());
 
         ((android.widget.RadioGroup) findViewById(R.id.rgFiltro)).setOnCheckedChangeListener((g, id) -> cargarOperaciones());
 
@@ -172,15 +185,39 @@ public class DeudasActivity extends AppCompatActivity {
         return suma;
     }
 
+    // Lista de productos: en el paso 1 se puede tocar uno para cambiar nombre/precio o quitarlo con ✕
     private void mostrarProductos() {
-        if (productos.isEmpty()) {
-            txtListaProductos.setText("Sin productos");
-        } else {
-            StringBuilder texto = new StringBuilder();
-            for (int i = 0; i < productos.size(); i++) {
-                texto.append("• ").append(productos.get(i)).append("  $").append(Math.round(precios.get(i))).append("\n");
+        boolean dividiendo = tarjetaDividir.getVisibility() == View.VISIBLE;
+        txtListaProductos.setVisibility(productos.isEmpty() ? View.VISIBLE : View.GONE);
+        listaProductos.removeAllViews();
+        for (int i = 0; i < productos.size(); i++) {
+            final int posicion = i;
+            LinearLayout fila = new LinearLayout(this);
+            fila.setOrientation(LinearLayout.HORIZONTAL);
+            fila.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+            TextView texto = new TextView(this);
+            texto.setText("• " + productos.get(i) + "   $" + Math.round(precios.get(i)) + (dividiendo ? "" : "   ✏️"));
+            texto.setTextColor(ContextCompat.getColor(this, R.color.texto));
+            texto.setTextSize(15);
+            texto.setPadding(0, dp(6), 0, dp(6));
+            if (!dividiendo) {
+                texto.setOnClickListener(v -> editarProducto(posicion));
             }
-            txtListaProductos.setText(texto.toString().trim());
+            fila.addView(texto, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+            if (!dividiendo) {
+                Button quitar = new Button(this, null, android.R.attr.borderlessButtonStyle);
+                quitar.setText("✕");
+                quitar.setTextColor(ContextCompat.getColor(this, R.color.rojo));
+                quitar.setOnClickListener(v -> {
+                    productos.remove(posicion);
+                    precios.remove(posicion);
+                    mostrarProductos();
+                });
+                fila.addView(quitar);
+            }
+            listaProductos.addView(fila);
         }
         txtTotal.setText("Total: $" + Math.round(total()));
         btnContinuar.setVisibility(!productos.isEmpty() && tarjetaDividir.getVisibility() != View.VISIBLE ? View.VISIBLE : View.GONE);
@@ -307,9 +344,28 @@ public class DeudasActivity extends AppCompatActivity {
         ContentValues compra = new ContentValues();
         compra.put("descripcion", String.join(", ", productos));
         compra.put("monto", total());
-        compra.put("fecha", new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date()));
-        compra.put("agendada", 0);
-        long compraId = db.insert("compras", null, compra);
+
+        long compraId;
+        // Quien ya habia pagado (por nombre) se mantiene como pagado al editar
+        HashMap<String, Integer> yaPagaron = new HashMap<>();
+        if (editandoId == null) {
+            compra.put("fecha", new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date()));
+            compra.put("agendada", 0);
+            compraId = db.insert("compras", null, compra);
+        } else {
+            compraId = editandoId;
+            String[] arg = {String.valueOf(compraId)};
+            Cursor c = db.rawQuery("SELECT COALESCE(d.nombre, ct.nombre), d.pagada FROM deudas d LEFT JOIN contactos ct ON ct.id = d.contacto_id WHERE d.compra_id = ?", arg);
+            while (c.moveToNext()) {
+                if (c.getString(0) != null) {
+                    yaPagaron.put(c.getString(0).toLowerCase(), c.getInt(1));
+                }
+            }
+            c.close();
+            db.update("compras", compra, "id = ?", arg);
+            db.delete("compra_productos", "compra_id = ?", arg);
+            db.delete("deudas", "compra_id = ?", arg);
+        }
 
         for (int i = 0; i < productos.size(); i++) {
             ContentValues producto = new ContentValues();
@@ -324,7 +380,8 @@ public class DeudasActivity extends AppCompatActivity {
             deuda.put("compra_id", compraId);
             deuda.put("nombre", nombres.get(i));
             deuda.put("monto", montos.get(i));
-            deuda.put("pagada", 0);
+            Integer pagada = yaPagaron.get(nombres.get(i).toLowerCase());
+            deuda.put("pagada", pagada == null ? 0 : pagada);
             Integer contactoId = contactos.get(nombres.get(i).toLowerCase());
             if (contactoId != null) {
                 deuda.put("contacto_id", contactoId);
@@ -332,15 +389,152 @@ public class DeudasActivity extends AppCompatActivity {
             db.insert("deudas", null, deuda);
         }
 
-        Toast.makeText(this, "Gasto compartido guardado", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, editandoId == null ? "Gasto compartido guardado" : "Cambios guardados", Toast.LENGTH_SHORT).show();
+        terminarEdicion();
+        cargarOperaciones();
+    }
+
+    // Deja el formulario vacio, en el paso 1, listo para una operacion nueva
+    private void terminarEdicion() {
+        editandoId = null;
         productos.clear();
         precios.clear();
         personas.clear();
         montosPersonas.clear();
         txtPersonas.setText("");
+        rbIguales.setChecked(true);
+        panelEditando.setVisibility(View.GONE);
+        btnGuardar.setText("Guardar gasto compartido");
         mostrarPersonas();
         mostrarPasoDividir(false);
-        cargarOperaciones();
+    }
+
+    // Cambiar nombre o precio de un producto de la lista
+    private void editarProducto(int posicion) {
+        LinearLayout vista = new LinearLayout(this);
+        vista.setOrientation(LinearLayout.VERTICAL);
+        vista.setPadding(dp(20), dp(8), dp(20), 0);
+
+        EditText nombre = new EditText(this);
+        nombre.setHint("Producto");
+        nombre.setText(productos.get(posicion));
+        vista.addView(nombre);
+
+        EditText precio = new EditText(this);
+        precio.setHint("Precio $");
+        precio.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        precio.setText(String.valueOf(Math.round(precios.get(posicion))));
+        vista.addView(precio);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Editar producto")
+                .setView(vista)
+                .setPositiveButton("Guardar", (d, w) -> {
+                    Double nuevoPrecio = Monto.leer(precio.getText().toString());
+                    String nuevoNombre = nombre.getText().toString().trim();
+                    if (nuevoNombre.isEmpty() || nuevoPrecio == null) {
+                        Toast.makeText(this, "Falta el producto o un precio valido", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    productos.set(posicion, nuevoNombre);
+                    precios.set(posicion, nuevoPrecio);
+                    mostrarProductos();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    // Menu al tocar una operacion guardada
+    private void opcionesOperacion(int compraId, String descripcion) {
+        String[] opciones = {"✅ Marcar quién pagó", "✏️ Editar (productos, precios, división)", "🗑️ Borrar"};
+        new AlertDialog.Builder(this)
+                .setTitle(descripcion)
+                .setItems(opciones, (d, which) -> {
+                    if (which == 0) {
+                        marcarPagos(compraId, descripcion);
+                    } else if (which == 1) {
+                        editarOperacion(compraId, descripcion);
+                    } else {
+                        borrarOperacion(compraId, descripcion);
+                    }
+                })
+                .show();
+    }
+
+    private void borrarOperacion(int compraId, String descripcion) {
+        new AlertDialog.Builder(this)
+                .setTitle("¿Borrar esta operación?")
+                .setMessage(descripcion + "\n\nSe borran sus productos y lo que cada persona debía. No se puede deshacer.")
+                .setPositiveButton("Borrar", (d, w) -> {
+                    SQLiteDatabase db = dbHelper.getWritableDatabase();
+                    String[] arg = {String.valueOf(compraId)};
+                    db.delete("deudas", "compra_id = ?", arg);
+                    db.delete("compra_productos", "compra_id = ?", arg);
+                    db.delete("compras", "id = ?", arg);
+                    if (editandoId != null && editandoId == compraId) {
+                        terminarEdicion();
+                    }
+                    Toast.makeText(this, "Operación borrada", Toast.LENGTH_SHORT).show();
+                    cargarOperaciones();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    // Carga una operacion guardada en el formulario para cambiarla
+    private void editarOperacion(int compraId, String descripcion) {
+        terminarEdicion();
+        String[] arg = {String.valueOf(compraId)};
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        Cursor c = db.rawQuery("SELECT nombre, precio FROM compra_productos WHERE compra_id = ?", arg);
+        while (c.moveToNext()) {
+            productos.add(c.getString(0));
+            precios.add(c.getDouble(1));
+        }
+        c.close();
+        if (productos.isEmpty()) {
+            // Operaciones antiguas sin productos: se usa la descripcion y el total
+            c = db.rawQuery("SELECT descripcion, monto FROM compras WHERE id = ?", arg);
+            if (c.moveToFirst()) {
+                productos.add(c.getString(0));
+                precios.add(c.getDouble(1));
+            }
+            c.close();
+        }
+
+        ArrayList<String> nombres = new ArrayList<>();
+        ArrayList<Double> montos = new ArrayList<>();
+        c = db.rawQuery("SELECT COALESCE(d.nombre, ct.nombre, 'Persona'), d.monto FROM deudas d LEFT JOIN contactos ct ON ct.id = d.contacto_id WHERE d.compra_id = ?", arg);
+        while (c.moveToNext()) {
+            nombres.add(c.getString(0));
+            montos.add(c.getDouble(1));
+        }
+        c.close();
+
+        // Si todos son "Persona N" con el mismo monto, era partes iguales
+        boolean iguales = !nombres.isEmpty();
+        for (int i = 0; i < nombres.size(); i++) {
+            if (!nombres.get(i).matches("Persona \\d+") || Math.abs(montos.get(i) - montos.get(0)) > 0.01) {
+                iguales = false;
+            }
+        }
+        if (iguales) {
+            rbIguales.setChecked(true);
+            txtPersonas.setText(String.valueOf(nombres.size()));
+        } else {
+            ((RadioButton) findViewById(R.id.rbPersonalizado)).setChecked(true);
+            personas.addAll(nombres);
+            montosPersonas.addAll(montos);
+        }
+
+        editandoId = (long) compraId;
+        txtEditando.setText("✏️ Editando: " + descripcion);
+        panelEditando.setVisibility(View.VISIBLE);
+        btnGuardar.setText("Guardar cambios");
+        mostrarPersonas();
+        mostrarPasoDividir(false);
+        scroll.smoothScrollTo(0, 0);
     }
 
     // Operaciones hechas, con filtro: todas, pendientes (falta que alguien pague) o completas
@@ -379,7 +573,7 @@ public class DeudasActivity extends AppCompatActivity {
             fila.setBackgroundTintList(ContextCompat.getColorStateList(this, completa ? R.color.verde_claro : R.color.rojo_claro));
             int p = dp(12);
             fila.setPadding(p, p, p, p);
-            fila.setOnClickListener(v -> marcarPagos(compraId, descripcion));
+            fila.setOnClickListener(v -> opcionesOperacion(compraId, descripcion));
 
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);

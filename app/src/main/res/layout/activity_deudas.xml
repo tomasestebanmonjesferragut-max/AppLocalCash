@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/fondo"
@@ -24,6 +25,36 @@
 
         <!-- 1. Productos -->
         <LinearLayout style="@style/Tarjeta">
+
+            <!-- Aviso cuando se esta editando una operacion guardada -->
+            <LinearLayout
+                android:id="@+id/panelEditando"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_tarjeta"
+                android:backgroundTint="@color/amarillo"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/txtEditando"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/texto"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnCancelarEdicion"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cancelar"
+                    android:textColor="@color/texto" />
+            </LinearLayout>
 
             <TextView
                 style="@style/TituloSeccion"
@@ -69,6 +100,13 @@
                 android:layout_height="wrap_content"
                 android:text="Sin productos"
                 android:textColor="@color/texto_suave" />
+
+            <!-- Cada producto: tocar para cambiar nombre o precio, ✕ para quitar -->
+            <LinearLayout
+                android:id="@+id/listaProductos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
 
             <TextView
                 android:id="@+id/txtTotal"
@@ -264,7 +302,7 @@
 
             <TextView
                 style="@style/Ayuda"
-                android:text="Toca una operación para marcar quién ya pagó." />
+                android:text="Toca una operación para marcar quién pagó, editarla o borrarla." />
 
             <LinearLayout
                 android:id="@+id/listaOperaciones"
