@@ -19,6 +19,7 @@ public class CuentasActivity extends AppCompatActivity {
     private DBHelper dbHelper;
     private ListView lista;
     private ArrayList<Integer> ids = new ArrayList<>();
+    private ArrayList<String> nombres = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,17 +54,19 @@ public class CuentasActivity extends AppCompatActivity {
             cargar();
         });
 
-        lista.setOnItemClickListener((parent, view, position, id) -> verMovimientos(ids.get(position)));
+        lista.setOnItemClickListener((parent, view, position, id) -> opciones(ids.get(position), nombres.get(position)));
 
         cargar();
     }
 
     private void cargar() {
         ids.clear();
+        nombres.clear();
         ArrayList<CharSequence> textos = new ArrayList<>();
         Cursor c = dbHelper.getReadableDatabase().rawQuery("SELECT id, nombre, saldo FROM cuentas", null);
         while (c.moveToNext()) {
             ids.add(c.getInt(0));
+            nombres.add(c.getString(1));
             double saldo = c.getDouble(2);
             // Saldo en verde si es positivo, en rojo si es negativo
             textos.add(Monto.conColor(this, c.getString(1) + "   ", "$" + Math.round(saldo), saldo >= 0));
@@ -72,12 +75,44 @@ public class CuentasActivity extends AppCompatActivity {
         lista.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, textos));
     }
 
+    private void opciones(int cuentaId, String nombre) {
+        String[] opciones = {"📋 Ver movimientos", "🗑️ Borrar cuenta"};
+        new AlertDialog.Builder(this)
+                .setTitle(nombre)
+                .setItems(opciones, (d, which) -> {
+                    if (which == 0) {
+                        verMovimientos(cuentaId);
+                    } else {
+                        borrarCuenta(cuentaId, nombre);
+                    }
+                })
+                .show();
+    }
+
+    private void borrarCuenta(int cuentaId, String nombre) {
+        new AlertDialog.Builder(this)
+                .setTitle("¿Borrar la cuenta " + nombre + "?")
+                .setMessage("Se borran también todos sus movimientos (y sus marcadores del mapa). No se puede deshacer.")
+                .setPositiveButton("Borrar", (d, w) -> {
+                    String[] arg = {String.valueOf(cuentaId)};
+                    dbHelper.getWritableDatabase().delete("movimientos", "cuenta_id = ?", arg);
+                    dbHelper.getWritableDatabase().delete("cuentas", "id = ?", arg);
+                    Toast.makeText(this, "Cuenta borrada", Toast.LENGTH_SHORT).show();
+                    cargar();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    // Movimientos de la cuenta. Tocar uno permite borrarlo (el saldo se devuelve).
     private void verMovimientos(int cuentaId) {
+        ArrayList<Integer> idsMovimientos = new ArrayList<>();
         ArrayList<CharSequence> textos = new ArrayList<>();
         Cursor c = dbHelper.getReadableDatabase().rawQuery(
-                "SELECT tipo, monto, descripcion, lat FROM movimientos WHERE cuenta_id = ? ORDER BY id DESC",
+                "SELECT tipo, monto, descripcion, lat, id FROM movimientos WHERE cuenta_id = ? ORDER BY id DESC",
                 new String[]{String.valueOf(cuentaId)});
         while (c.moveToNext()) {
+            idsMovimientos.add(c.getInt(4));
             boolean ingreso = c.getString(0).equals("Ingreso");
             String ubicacion = c.isNull(3) ? "" : " 📍";
             // Ingreso en verde con +, egreso en rojo con −
@@ -87,12 +122,14 @@ public class CuentasActivity extends AppCompatActivity {
         c.close();
 
         if (textos.isEmpty()) {
-            textos.add("Sin movimientos");
+            Toast.makeText(this, "Esta cuenta no tiene movimientos", Toast.LENGTH_SHORT).show();
+            return;
         }
 
         new AlertDialog.Builder(this)
-                .setTitle("Movimientos")
-                .setItems(textos.toArray(new CharSequence[0]), null)
+                .setTitle("Movimientos (toca uno para borrarlo)")
+                .setItems(textos.toArray(new CharSequence[0]), (d, which) ->
+                        DialogoMovimiento.confirmarBorrar(this, dbHelper, idsMovimientos.get(which), this::cargar))
                 .setPositiveButton("Cerrar", null)
                 .show();
     }

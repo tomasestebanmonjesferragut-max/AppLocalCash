@@ -76,12 +76,14 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .snippet("Toca este cartel para quitarlo"));
         });
 
-        // Quitar el punto marcado: tocar el marcador y luego su cartel
+        // Tocar el cartel: quita el punto marcado, o borra el movimiento (devolviendo el saldo)
         mMap.setOnInfoWindowClickListener(marker -> {
             if (marker.equals(puntoMarcado)) {
                 marker.remove();
                 puntoMarcado = null;
                 Toast.makeText(this, "Punto quitado", Toast.LENGTH_SHORT).show();
+            } else if (marker.getTag() instanceof Integer) {
+                DialogoMovimiento.confirmarBorrar(this, dbHelper, (Integer) marker.getTag(), this::cargarMapa);
             }
         });
 
@@ -114,14 +116,17 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Movimientos guardados en SQLite: ingreso en verde (suma), egreso en rojo (resta)
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor c = db.rawQuery("SELECT m.tipo, m.monto, m.descripcion, m.lat, m.lon, c.nombre FROM movimientos m JOIN cuentas c ON c.id = m.cuenta_id WHERE m.lat IS NOT NULL", null);
+        Cursor c = db.rawQuery("SELECT m.tipo, m.monto, m.descripcion, m.lat, m.lon, c.nombre, m.id FROM movimientos m JOIN cuentas c ON c.id = m.cuenta_id WHERE m.lat IS NOT NULL", null);
         while (c.moveToNext()) {
             boolean ingreso = c.getString(0).equals("Ingreso");
-            mMap.addMarker(new MarkerOptions()
+            Marker marcador = mMap.addMarker(new MarkerOptions()
                     .position(new LatLng(c.getDouble(3), c.getDouble(4)))
                     .icon(BitmapDescriptorFactory.defaultMarker(ingreso ? BitmapDescriptorFactory.HUE_GREEN : BitmapDescriptorFactory.HUE_RED))
                     .title(c.getString(2))
-                    .snippet((ingreso ? "+ $" : "− $") + Math.round(c.getDouble(1)) + "  " + c.getString(0) + " · " + c.getString(5)));
+                    .snippet((ingreso ? "+ $" : "− $") + Math.round(c.getDouble(1)) + "  " + c.getString(0) + " · " + c.getString(5) + "  (toca para borrar)"));
+            if (marcador != null) {
+                marcador.setTag(c.getInt(6));
+            }
         }
         c.close();
     }

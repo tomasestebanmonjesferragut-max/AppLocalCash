@@ -55,7 +55,7 @@
 
         <TextView
             style="@style/Ayuda"
-            android:text="Toca una cuenta para ver sus movimientos." />
+            android:text="Toca una cuenta para ver sus movimientos o borrarla." />
 
         <ListView
             android:id="@+id/lista"

@@ -79,22 +79,44 @@ public class ComprasActivity extends AppCompatActivity {
             cargar();
         });
 
-        // Al tocar una compra agendada se puede marcar como realizada
+        // Al tocar una compra: marcarla como realizada (si esta agendada) o borrarla
         lista.setOnItemClickListener((parent, view, position, id) -> {
-            if (!agendadas.get(position)) {
-                return;
-            }
+            int compraId = idsCompras.get(position);
+            boolean agendada = agendadas.get(position);
+            String[] opciones = agendada
+                    ? new String[]{"✅ Marcar como realizada", "🗑️ Borrar"}
+                    : new String[]{"🗑️ Borrar"};
             new AlertDialog.Builder(this)
-                    .setMessage("¿Marcar esta compra como realizada?")
-                    .setPositiveButton("Si", (d, w) -> {
-                        dbHelper.getWritableDatabase().execSQL("UPDATE compras SET agendada = 0 WHERE id = ?", new Object[]{idsCompras.get(position)});
-                        cargar();
+                    .setItems(opciones, (d, which) -> {
+                        if (agendada && which == 0) {
+                            dbHelper.getWritableDatabase().execSQL("UPDATE compras SET agendada = 0 WHERE id = ?", new Object[]{compraId});
+                            cargar();
+                        } else {
+                            borrar(compraId);
+                        }
                     })
-                    .setNegativeButton("No", null)
                     .show();
         });
 
         cargar();
+    }
+
+    // Borra la compra; si era un gasto compartido, tambien sus productos y deudas
+    private void borrar(int compraId) {
+        new AlertDialog.Builder(this)
+                .setTitle("¿Borrar esta compra?")
+                .setMessage("Si es un gasto compartido, se borran también sus productos y lo que cada persona debía.")
+                .setPositiveButton("Borrar", (d, w) -> {
+                    android.database.sqlite.SQLiteDatabase db = dbHelper.getWritableDatabase();
+                    String[] arg = {String.valueOf(compraId)};
+                    db.delete("deudas", "compra_id = ?", arg);
+                    db.delete("compra_productos", "compra_id = ?", arg);
+                    db.delete("compras", "id = ?", arg);
+                    Toast.makeText(this, "Compra borrada", Toast.LENGTH_SHORT).show();
+                    cargar();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
     private void cargar() {

@@ -19,6 +19,29 @@ import java.util.ArrayList;
 
 public class DialogoMovimiento {
 
+    // Pide confirmacion, borra el movimiento y devuelve el saldo de la cuenta a como estaba
+    public static void confirmarBorrar(AppCompatActivity activity, DBHelper dbHelper, int movimientoId, Runnable alBorrar) {
+        new AlertDialog.Builder(activity)
+                .setTitle("¿Borrar este movimiento?")
+                .setMessage("El saldo de la cuenta vuelve a como estaba antes del movimiento.")
+                .setPositiveButton("Borrar", (d, w) -> {
+                    SQLiteDatabase db = dbHelper.getWritableDatabase();
+                    Cursor c = db.rawQuery("SELECT cuenta_id, tipo, monto FROM movimientos WHERE id = ?",
+                            new String[]{String.valueOf(movimientoId)});
+                    if (c.moveToFirst()) {
+                        double monto = c.getDouble(2);
+                        double revertir = c.getString(1).equals("Ingreso") ? -monto : monto;
+                        db.execSQL("UPDATE cuentas SET saldo = saldo + ? WHERE id = ?", new Object[]{revertir, c.getInt(0)});
+                        db.delete("movimientos", "id = ?", new String[]{String.valueOf(movimientoId)});
+                    }
+                    c.close();
+                    Toast.makeText(activity, "Movimiento borrado", Toast.LENGTH_SHORT).show();
+                    alBorrar.run();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
     // Muestra el formulario de ingreso/egreso. punto es null cuando se registra sin ubicacion.
     // alGuardar se ejecuta despues de guardar (para refrescar la pantalla).
     public static void mostrar(AppCompatActivity activity, DBHelper dbHelper, LatLng punto, Runnable alGuardar) {

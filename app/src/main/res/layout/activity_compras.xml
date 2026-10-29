@@ -107,7 +107,7 @@
 
         <TextView
             style="@style/Ayuda"
-            android:text="Toca una compra agendada para marcarla como realizada." />
+            android:text="Toca una compra para marcarla como realizada o borrarla." />
 
         <ListView
             android:id="@+id/lista"
