@@ -68,7 +68,7 @@ public class CuentasActivity extends AppCompatActivity {
             // Saldo en verde si es positivo, en rojo si es negativo
             textos.add(Monto.conColor(this, cuenta.getNombre() + "   ", "$" + Math.round(cuenta.getSaldo()), cuenta.getSaldo() >= 0));
         }
-        lista.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, textos));
+        lista.setAdapter(new ArrayAdapter<>(this, R.layout.item_lista, textos));
     }
 
     private void opciones(Cuenta cuenta) {

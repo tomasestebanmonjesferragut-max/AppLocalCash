@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_margin="16dp"
     android:background="@color/fondo"
     android:fitsSystemWindows="true"
-    android:orientation="vertical"
-    android:layout_margin="16dp">
+    android:orientation="vertical">
 
     <LinearLayout style="@style/Encabezado">
 
@@ -24,65 +25,77 @@
             style="@style/TituloSeccion"
             android:text="Nueva compra" />
 
-        <EditText
-            android:id="@+id/txtDescripcion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Qué compraste o vas a comprar" />
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Campo"
+            android:hint="Qué compraste o vas a comprar">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/txtDescripcion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <EditText
-                android:id="@+id/txtMonto"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Campo"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Monto $"
-                android:inputType="numberDecimal" />
+                android:hint="Monto"
+                app:prefixText="$ ">
 
-            <EditText
-                android:id="@+id/txtFecha"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/txtMonto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Campo"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
-                android:hint="Fecha (15-10-2026)"
-                android:inputType="date" />
+                android:hint="Fecha (15-10-2026)">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/txtFecha"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="date" />
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
         <CheckBox
             android:id="@+id/chkAgendada"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:text="📅 Agendar (compra futura)" />
 
-        <LinearLayout
+        <TextView
+            style="@style/Ayuda"
+            android:layout_marginTop="4dp"
+            android:text="Compartir con (opcional)" />
+
+        <Spinner
+            android:id="@+id/spContacto"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Compartir con:"
-                android:textColor="@color/texto_suave" />
-
-            <Spinner
-                android:id="@+id/spContacto"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-        </LinearLayout>
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_campo"
+            android:paddingHorizontal="8dp" />
 
         <Button
             android:id="@+id/btnGuardar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Guardar compra" />
+            android:layout_marginTop="10dp"
+            android:text="💾 Guardar compra" />
     </LinearLayout>
 
     <TextView
@@ -97,9 +110,11 @@
         android:textStyle="bold" />
 
     <LinearLayout
-        style="@style/Tarjeta"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_marginTop="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
 
         <TextView
             style="@style/TituloSeccion"
@@ -111,8 +126,7 @@
 
         <ListView
             android:id="@+id/lista"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            style="@style/Lista" />
     </LinearLayout>
 
 </LinearLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -70,21 +71,33 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <EditText
-                    android:id="@+id/txtProducto"
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Campo"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
                     android:layout_weight="2"
-                    android:hint="Producto o servicio" />
+                    android:hint="Producto o servicio">
 
-                <EditText
-                    android:id="@+id/txtPrecio"
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/txtProducto"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapSentences" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Campo"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_weight="1"
-                    android:hint="Precio $"
-                    android:inputType="numberDecimal" />
+                    android:hint="Precio"
+                    app:prefixText="$ ">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/txtPrecio"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberDecimal" />
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <Button
@@ -92,6 +105,7 @@
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:text="➕ Agregar producto" />
 
             <TextView
@@ -110,9 +124,12 @@
 
             <TextView
                 android:id="@+id/txtTotal"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_tarjeta"
+                android:backgroundTint="@color/verde_claro"
+                android:padding="10dp"
                 android:text="Total: $0"
                 android:textColor="@color/verde_oscuro"
                 android:textSize="18sp"
@@ -171,16 +188,16 @@
 
                 <RadioButton
                     android:id="@+id/rbIguales"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    style="@style/Opcion"
                     android:checked="true"
-                    android:text="Partes iguales" />
+                    android:text="⚖️
+Partes iguales" />
 
                 <RadioButton
                     android:id="@+id/rbPersonalizado"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Personalizado" />
+                    style="@style/Opcion"
+                    android:text="✍️
+Personalizado" />
             </RadioGroup>
 
             <!-- Partes iguales: cuantas personas -->
@@ -195,6 +212,7 @@
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:text="👥 Elegir contactos (opcional)" />
 
                 <TextView
@@ -203,12 +221,17 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/texto_suave" />
 
-                <EditText
-                    android:id="@+id/txtPersonas"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Campo"
                     android:hint="¿Cuántas personas son?"
-                    android:inputType="number" />
+                    app:prefixText="👥 ">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/txtPersonas"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number" />
+                </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView
                     android:id="@+id/txtCadaUno"
@@ -232,23 +255,36 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <AutoCompleteTextView
-                        android:id="@+id/txtNombrePersona"
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Campo"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
                         android:layout_weight="2"
-                        android:completionThreshold="1"
-                        android:hint="Nombre o contacto"
-                        android:inputType="textPersonName" />
+                        android:hint="Nombre o contacto">
 
-                    <EditText
-                        android:id="@+id/txtMontoPersona"
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/txtNombrePersona"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:completionThreshold="1"
+                            android:inputType="textPersonName|textCapWords"
+                            android:paddingHorizontal="16dp"
+                            android:paddingVertical="16dp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Campo"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        android:hint="Monto $"
-                        android:inputType="numberDecimal" />
+                        android:hint="Monto"
+                        app:prefixText="$ ">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/txtMontoPersona"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal" />
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
                 <Button
@@ -256,6 +292,7 @@
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
                     android:text="➕ Agregar persona" />
 
                 <LinearLayout
@@ -277,11 +314,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:text="Guardar gasto compartido" />
+                android:text="💾 Guardar gasto compartido" />
         </LinearLayout>
 
         <!-- 3. Operaciones hechas -->
-        <LinearLayout style="@style/Tarjeta">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:orientation="vertical">
 
             <TextView
                 style="@style/TituloSeccion"
@@ -295,26 +336,24 @@
 
                 <RadioButton
                     android:id="@+id/rbTodas"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    style="@style/Opcion"
                     android:checked="true"
-                    android:text="Todas" />
+                    android:text="📋 Todas" />
 
                 <RadioButton
                     android:id="@+id/rbPendientes"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    style="@style/Opcion"
                     android:text="⏳ Pendientes" />
 
                 <RadioButton
                     android:id="@+id/rbCompletadas"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    style="@style/Opcion"
                     android:text="✅ Completas" />
             </RadioGroup>
 
             <TextView
                 style="@style/Ayuda"
+                android:layout_marginTop="8dp"
                 android:text="Toca una operación para marcar quién pagó, editarla o borrarla." />
 
             <LinearLayout

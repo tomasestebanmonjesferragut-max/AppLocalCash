@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fila de las listas: tarjeta blanca con bordes redondeados -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_tarjeta"
+    android:lineSpacingExtra="2dp"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp"
+    android:textColor="@color/texto"
+    android:textSize="15sp" />

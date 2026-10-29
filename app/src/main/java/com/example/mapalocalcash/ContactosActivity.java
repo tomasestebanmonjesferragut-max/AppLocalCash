@@ -83,7 +83,7 @@ public class ContactosActivity extends AppCompatActivity {
                     ? Monto.conColor(this, antes, "Te debe + $" + Math.round(debe), true)
                     : antes + "✔ Al día");
         }
-        lista.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, textos));
+        lista.setAdapter(new ArrayAdapter<>(this, R.layout.item_lista, textos));
     }
 
     private void opciones(Contacto contacto) {

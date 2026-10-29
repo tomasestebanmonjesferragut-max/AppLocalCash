@@ -65,4 +65,36 @@
         <item name="android:textColor">@color/texto_suave</item>
         <item name="android:textSize">13sp</item>
     </style>
+
+    <!-- Opcion de un RadioGroup con forma de tarjeta (se pinta al elegirla) -->
+    <style name="Opcion">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginHorizontal">3dp</item>
+        <item name="android:background">@drawable/bg_opcion</item>
+        <item name="android:button">@null</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingVertical">10dp</item>
+        <item name="android:textColor">@color/verde_oscuro</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Lista con filas en tarjeta separadas -->
+    <style name="Lista">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:divider">@android:color/transparent</item>
+        <item name="android:dividerHeight">8dp</item>
+        <item name="android:clipToPadding">false</item>
+    </style>
+
+    <!-- Campo de texto con borde y etiqueta -->
+    <style name="Campo" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+    </style>
 </resources>

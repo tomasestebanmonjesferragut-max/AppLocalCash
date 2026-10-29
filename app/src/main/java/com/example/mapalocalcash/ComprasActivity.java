@@ -125,6 +125,6 @@ public class ComprasActivity extends AppCompatActivity {
         }
 
         txtTotalAgendado.setText("Monto a apartar para compras agendadas: $" + Math.round(totalAgendado));
-        lista.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, textos));
+        lista.setAdapter(new ArrayAdapter<>(this, R.layout.item_lista, textos));
     }
 }
