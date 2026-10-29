@@ -29,7 +29,12 @@
                 style="@style/TituloSeccion"
                 android:text="1. Productos" />
 
+            <TextView
+                style="@style/Ayuda"
+                android:text="Agrega todo lo que compraron con su precio. Cuando termines, presiona Listo." />
+
             <LinearLayout
+                android:id="@+id/filaProducto"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
@@ -74,14 +79,51 @@
                 android:textColor="@color/verde_oscuro"
                 android:textSize="18sp"
                 android:textStyle="bold" />
+
+            <!-- Aparece cuando hay al menos un producto -->
+            <Button
+                android:id="@+id/btnContinuar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Listo, ahora dividir ➜"
+                android:visibility="gone" />
         </LinearLayout>
 
-        <!-- 2. Como dividir -->
-        <LinearLayout style="@style/Tarjeta">
+        <!-- 2. Como dividir: aparece despues de presionar Listo -->
+        <LinearLayout
+            android:id="@+id/tarjetaDividir"
+            style="@style/Tarjeta"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/TituloSeccion"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="2. Cómo dividir" />
+
+                <Button
+                    android:id="@+id/btnEditarProductos"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✏️ Editar productos" />
+            </LinearLayout>
 
             <TextView
-                style="@style/TituloSeccion"
-                android:text="2. Cómo dividir" />
+                android:id="@+id/txtTotalDividir"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:textColor="@color/verde_oscuro"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
             <RadioGroup
                 android:id="@+id/rgReparto"

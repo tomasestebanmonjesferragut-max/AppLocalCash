@@ -44,6 +44,11 @@ public class DeudasActivity extends AppCompatActivity {
     private RadioButton rbPendientes;
     private RadioButton rbCompletadas;
     private LinearLayout listaOperaciones;
+    private LinearLayout filaProducto;
+    private View btnAgregarProducto;
+    private View btnContinuar;
+    private LinearLayout tarjetaDividir;
+    private TextView txtTotalDividir;
 
     private ArrayList<String> productos = new ArrayList<>();
     private ArrayList<Double> precios = new ArrayList<>();
@@ -74,6 +79,11 @@ public class DeudasActivity extends AppCompatActivity {
         rbPendientes = findViewById(R.id.rbPendientes);
         rbCompletadas = findViewById(R.id.rbCompletadas);
         listaOperaciones = findViewById(R.id.listaOperaciones);
+        filaProducto = findViewById(R.id.filaProducto);
+        btnAgregarProducto = findViewById(R.id.btnAgregarProducto);
+        btnContinuar = findViewById(R.id.btnContinuar);
+        tarjetaDividir = findViewById(R.id.tarjetaDividir);
+        txtTotalDividir = findViewById(R.id.txtTotalDividir);
 
         // Sugerir nombres de la agenda de contactos
         ArrayList<String> nombres = new ArrayList<>();
@@ -85,7 +95,7 @@ public class DeudasActivity extends AppCompatActivity {
         c.close();
         txtNombrePersona.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, nombres));
 
-        findViewById(R.id.btnAgregarProducto).setOnClickListener(v -> {
+        btnAgregarProducto.setOnClickListener(v -> {
             String nombre = txtProducto.getText().toString().trim();
             Double precio = Monto.leer(txtPrecio.getText().toString());
             if (nombre.isEmpty() || precio == null) {
@@ -134,6 +144,10 @@ public class DeudasActivity extends AppCompatActivity {
             mostrarPersonas();
         });
 
+        // Paso 1 -> paso 2: terminar de agregar productos y elegir como dividir
+        btnContinuar.setOnClickListener(v -> mostrarPasoDividir(true));
+        findViewById(R.id.btnEditarProductos).setOnClickListener(v -> mostrarPasoDividir(false));
+
         findViewById(R.id.btnGuardar).setOnClickListener(v -> guardar());
 
         ((android.widget.RadioGroup) findViewById(R.id.rgFiltro)).setOnCheckedChangeListener((g, id) -> cargarOperaciones());
@@ -169,7 +183,17 @@ public class DeudasActivity extends AppCompatActivity {
             txtListaProductos.setText(texto.toString().trim());
         }
         txtTotal.setText("Total: $" + Math.round(total()));
+        btnContinuar.setVisibility(!productos.isEmpty() && tarjetaDividir.getVisibility() != View.VISIBLE ? View.VISIBLE : View.GONE);
         actualizarReparto();
+    }
+
+    // Paso 1 (productos) o paso 2 (como dividir). En el paso 2 no se pueden cambiar los productos.
+    private void mostrarPasoDividir(boolean dividir) {
+        tarjetaDividir.setVisibility(dividir ? View.VISIBLE : View.GONE);
+        filaProducto.setVisibility(dividir ? View.GONE : View.VISIBLE);
+        btnAgregarProducto.setVisibility(dividir ? View.GONE : View.VISIBLE);
+        txtTotalDividir.setText("Total a dividir: $" + Math.round(total()));
+        mostrarProductos();
     }
 
     // Lista de personas del reparto personalizado, cada una con un boton para quitarla
@@ -315,7 +339,7 @@ public class DeudasActivity extends AppCompatActivity {
         montosPersonas.clear();
         txtPersonas.setText("");
         mostrarPersonas();
-        mostrarProductos();
+        mostrarPasoDividir(false);
         cargarOperaciones();
     }
 
