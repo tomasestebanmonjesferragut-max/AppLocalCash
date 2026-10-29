@@ -2,7 +2,6 @@ package com.example.mapalocalcash;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -10,6 +9,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -26,8 +26,15 @@ import com.google.android.gms.location.Priority;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class DialogoMovimiento {
+
+    // Lo escrito en el formulario mientras el usuario va al mapa a elegir (o cambiar) el lugar
+    private static int borradorCuenta = -1;
+    private static boolean borradorIngreso;
+    private static String borradorMonto;
+    private static String borradorDescripcion;
 
     // Pide confirmacion, borra el movimiento y devuelve el saldo de la cuenta a como estaba
     public static void confirmarBorrar(AppCompatActivity activity, int movimientoId, Runnable alBorrar) {
@@ -43,9 +50,21 @@ public class DialogoMovimiento {
                 .show();
     }
 
-    // Muestra el formulario de ingreso/egreso. punto es null cuando se registra sin ubicacion.
-    // alGuardar se ejecuta despues de guardar (para refrescar la pantalla).
-    public static void mostrar(AppCompatActivity activity, LatLng punto, Runnable alGuardar) {
+    // Hay datos guardados de un formulario que se dejo para ir al mapa
+    public static boolean hayBorrador() {
+        return borradorCuenta != -1;
+    }
+
+    public static void descartarBorrador() {
+        borradorCuenta = -1;
+        borradorMonto = null;
+        borradorDescripcion = null;
+    }
+
+    // Muestra el formulario de ingreso/egreso.
+    // punto: lugar ya elegido (null = sin ubicacion). alGuardar: refresca la pantalla al guardar.
+    // irAlMapa: abre el mapa para elegir o cambiar el lugar (recibe el lugar actual); null = sin esa opcion.
+    public static void mostrar(AppCompatActivity activity, LatLng punto, Runnable alGuardar, Consumer<LatLng> irAlMapa) {
         ArrayList<Cuenta> cuentas = new CuentaDAO(activity).listar();
         if (cuentas.isEmpty()) {
             Toast.makeText(activity, "Primero crea una cuenta en 💳 Cuentas", Toast.LENGTH_LONG).show();
@@ -61,16 +80,42 @@ public class DialogoMovimiento {
         RadioButton rbIngreso = vista.findViewById(R.id.rbIngreso);
         EditText txtMonto = vista.findViewById(R.id.txtMonto);
         EditText txtDescripcion = vista.findViewById(R.id.txtDescripcion);
-
         CheckBox chkUbicacion = vista.findViewById(R.id.chkUbicacion);
+        View panelUbicacion = vista.findViewById(R.id.panelUbicacion);
+        View panelLugar = vista.findViewById(R.id.panelLugar);
+        TextView txtDireccion = vista.findViewById(R.id.txtDireccion);
 
         spCuenta.setAdapter(new ArrayAdapter<>(activity, android.R.layout.simple_spinner_dropdown_item, nombresCuentas));
 
-        // Desde el mapa el lugar ya esta elegido; desde el panel se puede usar el GPS o ir al mapa
-        if (punto != null) {
-            vista.findViewById(R.id.panelUbicacion).setVisibility(View.GONE);
-            vista.findViewById(R.id.txtUbicacionMapa).setVisibility(View.VISIBLE);
+        // Volver de elegir el lugar: se recupera lo que ya estaba escrito
+        if (hayBorrador()) {
+            if (borradorCuenta < cuentas.size()) {
+                spCuenta.setSelection(borradorCuenta);
+            }
+            rbIngreso.setChecked(borradorIngreso);
+            txtMonto.setText(borradorMonto);
+            txtDescripcion.setText(borradorDescripcion);
+            descartarBorrador();
         }
+
+        // Lugar elegido (arreglo para poder cambiarlo desde los botones)
+        LatLng[] lugar = {punto};
+        Runnable mostrarLugar = () -> {
+            boolean hayLugar = lugar[0] != null;
+            panelLugar.setVisibility(hayLugar ? View.VISIBLE : View.GONE);
+            panelUbicacion.setVisibility(hayLugar ? View.GONE : View.VISIBLE);
+            if (hayLugar) {
+                txtDireccion.setText("Buscando la dirección…");
+                Direccion.buscar(activity, lugar[0], txtDireccion::setText);
+            }
+        };
+        mostrarLugar.run();
+
+        if (irAlMapa == null) {
+            vista.findViewById(R.id.btnElegirMapa).setVisibility(View.GONE);
+            vista.findViewById(R.id.btnCambiarLugar).setVisibility(View.GONE);
+        }
+
         chkUbicacion.setOnCheckedChangeListener((boton, marcado) -> {
             if (marcado && !tienePermisoUbicacion(activity)) {
                 boton.setChecked(false);
@@ -81,37 +126,51 @@ public class DialogoMovimiento {
         });
 
         AlertDialog dialogo = new AlertDialog.Builder(activity)
-                .setTitle(punto == null ? "Nuevo movimiento" : "Nuevo movimiento en el mapa")
+                .setTitle("Nuevo movimiento")
                 .setView(vista)
-                .setPositiveButton("Guardar", (d, w) -> {
-                    Double monto = Monto.leer(txtMonto.getText().toString());
-                    if (monto == null) {
-                        Toast.makeText(activity, "Escribe un monto valido", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    int cuentaId = cuentas.get(spCuenta.getSelectedItemPosition()).getId();
-                    String tipo = rbIngreso.isChecked() ? Movimiento.INGRESO : Movimiento.EGRESO;
-                    String descripcion = txtDescripcion.getText().toString();
-
-                    if (punto != null) {
-                        guardar(activity, new Movimiento(cuentaId, tipo, monto, descripcion, punto.latitude, punto.longitude), alGuardar);
-                    } else if (chkUbicacion.isChecked()) {
-                        guardarConMiUbicacion(activity, new Movimiento(cuentaId, tipo, monto, descripcion, null, null), alGuardar);
-                    } else {
-                        guardar(activity, new Movimiento(cuentaId, tipo, monto, descripcion, null, null), alGuardar);
-                    }
-                })
+                .setPositiveButton("Guardar", null) // se asigna abajo para no cerrar si falta el monto
                 .setNegativeButton("Cancelar", null)
                 .create();
 
-        // Ir al mapa a elegir el lugar: alli se mantiene presionado y se abre este mismo formulario
-        vista.findViewById(R.id.btnElegirMapa).setOnClickListener(v -> {
+        // Ir al mapa: se guarda lo escrito para recuperarlo al volver
+        View.OnClickListener abrirMapa = v -> {
+            borradorCuenta = spCuenta.getSelectedItemPosition();
+            borradorIngreso = rbIngreso.isChecked();
+            borradorMonto = txtMonto.getText().toString();
+            borradorDescripcion = txtDescripcion.getText().toString();
             dialogo.dismiss();
-            activity.startActivity(new Intent(activity, MapaActivity.class));
-            Toast.makeText(activity, "Mantén presionado el lugar del movimiento", Toast.LENGTH_LONG).show();
+            irAlMapa.accept(lugar[0]);
+        };
+        vista.findViewById(R.id.btnElegirMapa).setOnClickListener(abrirMapa);
+        vista.findViewById(R.id.btnCambiarLugar).setOnClickListener(abrirMapa);
+        vista.findViewById(R.id.btnQuitarLugar).setOnClickListener(v -> {
+            lugar[0] = null;
+            mostrarLugar.run();
         });
 
         dialogo.show();
+
+        // Guardar: si falta el monto, avisa y el formulario sigue abierto
+        dialogo.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            Double monto = Monto.leer(txtMonto.getText().toString());
+            if (monto == null) {
+                txtMonto.setError("Escribe un monto valido");
+                txtMonto.requestFocus();
+                return;
+            }
+            int cuentaId = cuentas.get(spCuenta.getSelectedItemPosition()).getId();
+            String tipo = rbIngreso.isChecked() ? Movimiento.INGRESO : Movimiento.EGRESO;
+            String descripcion = txtDescripcion.getText().toString();
+            dialogo.dismiss();
+
+            if (lugar[0] != null) {
+                guardar(activity, new Movimiento(cuentaId, tipo, monto, descripcion, lugar[0].latitude, lugar[0].longitude), alGuardar);
+            } else if (chkUbicacion.isChecked()) {
+                guardarConMiUbicacion(activity, new Movimiento(cuentaId, tipo, monto, descripcion, null, null), alGuardar);
+            } else {
+                guardar(activity, new Movimiento(cuentaId, tipo, monto, descripcion, null, null), alGuardar);
+            }
+        });
     }
 
     private static void guardar(AppCompatActivity activity, Movimiento movimiento, Runnable alGuardar) {

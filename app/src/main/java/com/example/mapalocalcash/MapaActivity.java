@@ -3,7 +3,11 @@ package com.example.mapalocalcash;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -29,10 +33,19 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapaActivity extends AppCompatActivity implements OnMapReadyCallback {
 
+    // Modo "elegir lugar": se abre desde el formulario de movimiento y devuelve el punto tocado
+    public static final String EXTRA_ELEGIR = "elegir";
+    public static final String EXTRA_LAT = "lat";
+    public static final String EXTRA_LON = "lon";
+
+    private boolean modoElegir;
+    private Button btnAccionPunto;
     private GoogleMap mMap = null;
     private MovimientoDAO movimientoDAO;
     private FusedLocationProviderClient ubicacion;
     private Marker puntoMarcado = null;
+    // Lugar tocado (se guarda aparte para que no se pierda al redibujar el mapa)
+    private LatLng puntoElegido = null;
     private LatLng yo = null;
 
     @Override
@@ -53,7 +66,21 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        findViewById(R.id.btnVolver).setOnClickListener(v -> finish());
+        modoElegir = getIntent().getBooleanExtra(EXTRA_ELEGIR, false);
+        btnAccionPunto = findViewById(R.id.btnAccionPunto);
+        Button btnVolver = findViewById(R.id.btnVolver);
+        if (modoElegir) {
+            ((TextView) findViewById(R.id.txtTituloMapa)).setText("📍 Elige el lugar");
+            ((TextView) findViewById(R.id.txtAyudaMapa)).setText("Toca el mapa donde fue el gasto o ingreso y presiona Guardar dirección.");
+            btnAccionPunto.setText("📍 Guardar dirección");
+            btnVolver.setText("Cancelar y volver al formulario");
+            if (getIntent().hasExtra(EXTRA_LAT)) {
+                puntoElegido = new LatLng(getIntent().getDoubleExtra(EXTRA_LAT, 0), getIntent().getDoubleExtra(EXTRA_LON, 0));
+            }
+        }
+
+        btnVolver.setOnClickListener(v -> finish());
+        btnAccionPunto.setOnClickListener(v -> usarPuntoElegido());
     }
 
     @Override
@@ -61,37 +88,37 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap = googleMap;
         mMap.getUiSettings().setZoomControlsEnabled(true);
 
+        // Centrado en el lugar ya elegido, o en la zona de inicio
         LatLng starPoin = new LatLng(-33.498895, -70.616617);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(starPoin, 18));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(puntoElegido != null ? puntoElegido : starPoin, 18));
 
-        // Marca punto en la vista: solo uno, si se marca otro se quita el anterior
+        // Tocar el mapa marca el lugar (solo uno) y muestra el boton de abajo
         mMap.setOnMapClickListener(punto -> {
-            if (puntoMarcado != null) {
-                puntoMarcado.remove();
-            }
-            puntoMarcado = mMap.addMarker(new MarkerOptions()
-                    .position(punto)
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW))
-                    .title("Punto marcado")
-                    .snippet("Toca este cartel para quitarlo"));
+            puntoElegido = punto;
+            dibujarPuntoElegido();
         });
 
         // Tocar el cartel: quita el punto marcado, o borra el movimiento (devolviendo el saldo)
         mMap.setOnInfoWindowClickListener(marker -> {
             if (marker.equals(puntoMarcado)) {
-                marker.remove();
-                puntoMarcado = null;
+                puntoElegido = null;
+                dibujarPuntoElegido();
                 Toast.makeText(this, "Punto quitado", Toast.LENGTH_SHORT).show();
             } else if (marker.getTag() instanceof Integer) {
                 DialogoMovimiento.confirmarBorrar(this, (Integer) marker.getTag(), this::cargarMapa);
             }
         });
 
-        // Mantener presionado: registrar un movimiento en ese lugar
-        mMap.setOnMapLongClickListener(punto -> DialogoMovimiento.mostrar(this, punto, this::cargarMapa));
-
         cargarMapa();
         activarUbicacion();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (!modoElegir) {
+            DialogoMovimiento.descartarBorrador();
+        }
     }
 
     @Override
@@ -102,7 +129,49 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    // Dibuja mi ubicacion y un marcador por cada movimiento con ubicacion
+    // Pone (o quita) el marcador amarillo del lugar tocado y muestra u oculta el boton de abajo
+    private void dibujarPuntoElegido() {
+        if (puntoMarcado != null) {
+            puntoMarcado.remove();
+            puntoMarcado = null;
+        }
+        if (puntoElegido != null) {
+            puntoMarcado = mMap.addMarker(new MarkerOptions()
+                    .position(puntoElegido)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW))
+                    .title("Buscando la dirección…")
+                    .snippet("Toca este cartel para quitarlo"));
+            Marker marcador = puntoMarcado;
+            Direccion.buscar(this, puntoElegido, direccion -> {
+                if (marcador != null && marcador.equals(puntoMarcado)) {
+                    marcador.setTitle(direccion);
+                    marcador.showInfoWindow();
+                }
+            });
+        }
+        btnAccionPunto.setVisibility(puntoElegido == null ? View.GONE : View.VISIBLE);
+    }
+
+    // Boton de abajo: devolver el lugar al formulario, o registrar un movimiento en el
+    private void usarPuntoElegido() {
+        if (puntoElegido == null) {
+            return;
+        }
+        if (modoElegir) {
+            Intent datos = new Intent();
+            datos.putExtra(EXTRA_LAT, puntoElegido.latitude);
+            datos.putExtra(EXTRA_LON, puntoElegido.longitude);
+            setResult(RESULT_OK, datos);
+            finish();
+        } else {
+            DialogoMovimiento.mostrar(this, puntoElegido, () -> {
+                puntoElegido = null;
+                cargarMapa();
+            }, lugarActual -> Toast.makeText(this, "Toca otro lugar y presiona Registrar movimiento aquí", Toast.LENGTH_LONG).show());
+        }
+    }
+
+    // Dibuja mi ubicacion, un marcador por cada movimiento con ubicacion y el lugar tocado
     private void cargarMapa() {
         mMap.clear();
         puntoMarcado = null;
@@ -126,6 +195,7 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
                 marcador.setTag(m.getId());
             }
         }
+        dibujarPuntoElegido();
     }
 
     // Geolocalizacion
@@ -143,7 +213,9 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (location != null) {
                 yo = new LatLng(location.getLatitude(), location.getLongitude());
                 cargarMapa();
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(yo, 17));
+                if (puntoElegido == null) {
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(yo, 17));
+                }
             } else {
                 Toast.makeText(this, "Activa el GPS para ver tu ubicacion", Toast.LENGTH_SHORT).show();
             }

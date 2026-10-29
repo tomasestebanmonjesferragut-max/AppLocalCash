@@ -14,12 +14,14 @@
         android:layout_margin="8dp">
 
         <TextView
+            android:id="@+id/txtTituloMapa"
             style="@style/EncabezadoTitulo"
             android:text="🗺️ Mapa de movimientos" />
 
         <TextView
+            android:id="@+id/txtAyudaMapa"
             style="@style/EncabezadoTexto"
-            android:text="Mantén presionado el mapa para registrar un gasto o ingreso en ese lugar." />
+            android:text="Toca el mapa para marcar un lugar y registrar un gasto o ingreso ahí." />
 
         <TextView
             style="@style/EncabezadoTexto"
@@ -33,16 +35,33 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/btnVolver"
+        android:layout_above="@+id/botones"
         android:layout_below="@id/encabezado" />
 
-    <Button
-        android:id="@+id/btnVolver"
-        style="@style/Widget.Material3.Button.TonalButton"
+    <LinearLayout
+        android:id="@+id/botones"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_margin="8dp"
-        android:text="⬅  Volver al panel" />
+        android:orientation="vertical">
+
+        <!-- Aparece cuando hay un punto marcado -->
+        <Button
+            android:id="@+id/btnAccionPunto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingVertical="12dp"
+            android:text="➕ Registrar movimiento aquí"
+            android:textSize="16sp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnVolver"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⬅  Volver al panel" />
+    </LinearLayout>
 
 </RelativeLayout>
