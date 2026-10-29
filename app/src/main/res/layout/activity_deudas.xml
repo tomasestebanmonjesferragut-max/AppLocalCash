@@ -1,126 +1,234 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/fondo"
-    android:fitsSystemWindows="true"
-    android:orientation="vertical"
-    android:layout_margin="16dp">
-
-    <LinearLayout style="@style/Encabezado">
-
-        <TextView
-            style="@style/EncabezadoTitulo"
-            android:text="🤝 Gastos compartidos" />
-
-        <TextView
-            style="@style/EncabezadoTexto"
-            android:text="Anota lo que compraron juntos, elige con quién dividir y la app calcula cuánto te debe cada uno." />
-    </LinearLayout>
-
-    <LinearLayout style="@style/Tarjeta">
-
-        <TextView
-            style="@style/TituloSeccion"
-            android:text="1. Productos" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <EditText
-                android:id="@+id/txtProducto"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:hint="Producto o servicio" />
-
-            <EditText
-                android:id="@+id/txtPrecio"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
-                android:hint="Precio $"
-                android:inputType="numberDecimal" />
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/btnAgregarProducto"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="➕ Agregar producto" />
-
-        <TextView
-            android:id="@+id/txtListaProductos"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="4"
-            android:scrollbars="vertical"
-            android:text="Sin productos"
-            android:textColor="@color/texto_suave" />
-
-        <TextView
-            android:id="@+id/txtTotal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Total: $0"
-            android:textColor="@color/verde_oscuro"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            style="@style/TituloSeccion"
-            android:layout_marginTop="8dp"
-            android:text="2. Cómo dividir" />
-
-        <RadioGroup
-            android:id="@+id/rgReparto"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/rbIguales"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="Partes iguales" />
-
-            <RadioButton
-                android:id="@+id/rbPersonalizado"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Personalizado" />
-        </RadioGroup>
-
-        <Button
-            android:id="@+id/btnDividir"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="3. Elegir contactos y dividir" />
-    </LinearLayout>
+    android:fitsSystemWindows="true">
 
     <LinearLayout
-        style="@style/Tarjeta"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <TextView
-            style="@style/TituloSeccion"
-            android:text="Te deben" />
+        <LinearLayout style="@style/Encabezado">
 
-        <TextView
-            style="@style/Ayuda"
-            android:text="Toca una deuda para ver los productos y marcarla como pagada." />
+            <TextView
+                style="@style/EncabezadoTitulo"
+                android:text="🤝 Gastos compartidos" />
 
-        <ListView
-            android:id="@+id/listaDeudas"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            <TextView
+                style="@style/EncabezadoTexto"
+                android:text="Anota lo que compraron, decide cómo dividir y lleva la cuenta de quién ya pagó." />
+        </LinearLayout>
+
+        <!-- 1. Productos -->
+        <LinearLayout style="@style/Tarjeta">
+
+            <TextView
+                style="@style/TituloSeccion"
+                android:text="1. Productos" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/txtProducto"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:hint="Producto o servicio" />
+
+                <EditText
+                    android:id="@+id/txtPrecio"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:hint="Precio $"
+                    android:inputType="numberDecimal" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnAgregarProducto"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="➕ Agregar producto" />
+
+            <TextView
+                android:id="@+id/txtListaProductos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sin productos"
+                android:textColor="@color/texto_suave" />
+
+            <TextView
+                android:id="@+id/txtTotal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Total: $0"
+                android:textColor="@color/verde_oscuro"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 2. Como dividir -->
+        <LinearLayout style="@style/Tarjeta">
+
+            <TextView
+                style="@style/TituloSeccion"
+                android:text="2. Cómo dividir" />
+
+            <RadioGroup
+                android:id="@+id/rgReparto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rbIguales"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="Partes iguales" />
+
+                <RadioButton
+                    android:id="@+id/rbPersonalizado"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Personalizado" />
+            </RadioGroup>
+
+            <!-- Partes iguales: cuantas personas -->
+            <LinearLayout
+                android:id="@+id/panelIguales"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <EditText
+                    android:id="@+id/txtPersonas"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="¿Cuántas personas son?"
+                    android:inputType="number" />
+
+                <TextView
+                    android:id="@+id/txtCadaUno"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/verde_oscuro"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Personalizado: nombre y monto de cada persona -->
+            <LinearLayout
+                android:id="@+id/panelPersonalizado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/txtNombrePersona"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:completionThreshold="1"
+                        android:hint="Nombre"
+                        android:inputType="textPersonName" />
+
+                    <EditText
+                        android:id="@+id/txtMontoPersona"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:hint="Monto $"
+                        android:inputType="numberDecimal" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnAgregarPersona"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="➕ Agregar persona" />
+
+                <LinearLayout
+                    android:id="@+id/listaPersonas"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/txtEstadoReparto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnGuardar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Guardar gasto compartido" />
+        </LinearLayout>
+
+        <!-- 3. Operaciones hechas -->
+        <LinearLayout style="@style/Tarjeta">
+
+            <TextView
+                style="@style/TituloSeccion"
+                android:text="Operaciones" />
+
+            <RadioGroup
+                android:id="@+id/rgFiltro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rbTodas"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="Todas" />
+
+                <RadioButton
+                    android:id="@+id/rbPendientes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⏳ Pendientes" />
+
+                <RadioButton
+                    android:id="@+id/rbCompletadas"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✅ Completas" />
+            </RadioGroup>
+
+            <TextView
+                style="@style/Ayuda"
+                android:text="Toca una operación para marcar quién ya pagó." />
+
+            <LinearLayout
+                android:id="@+id/listaOperaciones"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
     </LinearLayout>
-
-</LinearLayout>
+</ScrollView>
