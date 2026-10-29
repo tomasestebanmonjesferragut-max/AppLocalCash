@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -49,13 +50,13 @@ public class DeudasActivity extends AppCompatActivity {
 
         findViewById(R.id.btnAgregarProducto).setOnClickListener(v -> {
             String nombre = txtProducto.getText().toString();
-            String precio = txtPrecio.getText().toString();
-            if (nombre.isEmpty() || precio.isEmpty()) {
-                Toast.makeText(this, "Falta el producto o el precio", Toast.LENGTH_SHORT).show();
+            Double precio = Monto.leer(txtPrecio.getText().toString());
+            if (nombre.isEmpty() || precio == null) {
+                Toast.makeText(this, "Falta el producto o un precio valido", Toast.LENGTH_SHORT).show();
                 return;
             }
             productos.add(nombre);
-            precios.add(Double.parseDouble(precio));
+            precios.add(precio);
             txtProducto.setText("");
             txtPrecio.setText("");
             mostrarProductos();
@@ -166,8 +167,12 @@ public class DeudasActivity extends AppCompatActivity {
                     ArrayList<Double> montos = new ArrayList<>();
                     double suma = 0;
                     for (EditText campo : campos) {
-                        String texto = campo.getText().toString();
-                        double monto = texto.isEmpty() ? 0 : Double.parseDouble(texto);
+                        String texto = campo.getText().toString().trim();
+                        Double monto = texto.isEmpty() ? Double.valueOf(0) : Monto.leer(texto);
+                        if (monto == null) {
+                            Toast.makeText(this, "Hay un monto que no es valido", Toast.LENGTH_LONG).show();
+                            return;
+                        }
                         montos.add(monto);
                         suma += monto;
                     }
@@ -219,13 +224,16 @@ public class DeudasActivity extends AppCompatActivity {
     private void cargarDeudas() {
         idsDeudas.clear();
         idsComprasDeudas.clear();
-        ArrayList<String> textos = new ArrayList<>();
+        ArrayList<CharSequence> textos = new ArrayList<>();
         Cursor c = dbHelper.getReadableDatabase().rawQuery(
                 "SELECT d.id, ct.nombre, d.monto, co.descripcion, co.id FROM deudas d JOIN contactos ct ON ct.id = d.contacto_id JOIN compras co ON co.id = d.compra_id WHERE d.pagada = 0 ORDER BY d.id DESC", null);
         while (c.moveToNext()) {
             idsDeudas.add(c.getInt(0));
             idsComprasDeudas.add(c.getInt(4));
-            textos.add(c.getString(1) + " debe $" + Math.round(c.getDouble(2)) + "  (" + c.getString(3) + ")");
+            // Lo que te deben vuelve a ti: monto en verde
+            textos.add(TextUtils.concat(
+                    Monto.conColor(this, c.getString(1) + " te debe ", "+ $" + Math.round(c.getDouble(2)), true),
+                    "  (" + c.getString(3) + ")"));
         }
         c.close();
         listaDeudas.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, textos));

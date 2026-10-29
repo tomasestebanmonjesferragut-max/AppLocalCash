@@ -200,12 +200,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .setTitle(punto == null ? "Nuevo movimiento" : "Nuevo movimiento en el mapa")
                 .setView(vista)
                 .setPositiveButton("Guardar", (d, w) -> {
-                    String textoMonto = txtMonto.getText().toString();
-                    if (textoMonto.isEmpty()) {
-                        Toast.makeText(this, "Falta el monto", Toast.LENGTH_SHORT).show();
+                    Double monto = Monto.leer(txtMonto.getText().toString());
+                    if (monto == null) {
+                        Toast.makeText(this, "Escribe un monto valido", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    double monto = Double.parseDouble(textoMonto);
                     String tipo = rbIngreso.isChecked() ? "Ingreso" : "Egreso";
                     int cuentaId = idsCuentas.get(spCuenta.getSelectedItemPosition());
 

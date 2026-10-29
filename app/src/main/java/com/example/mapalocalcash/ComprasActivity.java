@@ -3,6 +3,7 @@ package com.example.mapalocalcash;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -53,15 +54,15 @@ public class ComprasActivity extends AppCompatActivity {
 
         findViewById(R.id.btnGuardar).setOnClickListener(v -> {
             String descripcion = txtDescripcion.getText().toString();
-            String monto = txtMonto.getText().toString();
-            if (descripcion.isEmpty() || monto.isEmpty()) {
-                Toast.makeText(this, "Falta la descripcion o el monto", Toast.LENGTH_SHORT).show();
+            Double monto = Monto.leer(txtMonto.getText().toString());
+            if (descripcion.isEmpty() || monto == null) {
+                Toast.makeText(this, "Falta la descripcion o un monto valido", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             ContentValues valores = new ContentValues();
             valores.put("descripcion", descripcion);
-            valores.put("monto", Double.parseDouble(monto));
+            valores.put("monto", monto);
             valores.put("fecha", txtFecha.getText().toString());
             valores.put("agendada", chkAgendada.isChecked() ? 1 : 0);
             int contactoId = idsContactos.get(spContacto.getSelectedItemPosition());
@@ -99,16 +100,18 @@ public class ComprasActivity extends AppCompatActivity {
     private void cargar() {
         idsCompras.clear();
         agendadas.clear();
-        ArrayList<String> textos = new ArrayList<>();
+        ArrayList<CharSequence> textos = new ArrayList<>();
         double totalAgendado = 0;
 
         Cursor c = dbHelper.getReadableDatabase().rawQuery(
                 "SELECT co.id, co.descripcion, co.monto, co.fecha, co.agendada, ct.nombre FROM compras co LEFT JOIN contactos ct ON ct.id = co.contacto_id ORDER BY co.agendada DESC, co.id DESC", null);
         while (c.moveToNext()) {
             boolean agendada = c.getInt(4) == 1;
-            String texto = (agendada ? "[Agendada] " : "") + c.getString(3) + " " + c.getString(1) + "  $" + Math.round(c.getDouble(2));
+            // Las compras son gastos: monto en rojo
+            String antes = (agendada ? "📅 Agendada · " : "") + c.getString(3) + " " + c.getString(1) + "  ";
+            CharSequence texto = Monto.conColor(this, antes, "− $" + Math.round(c.getDouble(2)), false);
             if (!c.isNull(5)) {
-                texto += "  (con " + c.getString(5) + ")";
+                texto = TextUtils.concat(texto, "  (con " + c.getString(5) + ")");
             }
             if (agendada) {
                 totalAgendado += c.getDouble(2);
