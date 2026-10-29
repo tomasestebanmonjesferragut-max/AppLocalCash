@@ -2,45 +2,65 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/fondo"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_margin="16dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Cuentas"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+    <LinearLayout style="@style/Encabezado">
 
-    <EditText
-        android:id="@+id/txtNombre"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Nombre (ej: Efectivo, Ahorros, Tarjeta)" />
+        <TextView
+            style="@style/EncabezadoTitulo"
+            android:text="💳 Cuentas" />
 
-    <EditText
-        android:id="@+id/txtSaldo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Saldo inicial"
-        android:inputType="numberDecimal" />
+        <TextView
+            style="@style/EncabezadoTexto"
+            android:text="Crea las cuentas donde tienes tu dinero: efectivo, ahorros, tarjetas. El saldo cambia con cada movimiento." />
+    </LinearLayout>
 
-    <Button
-        android:id="@+id/btnAgregar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Agregar cuenta" />
+    <LinearLayout style="@style/Tarjeta">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Toca una cuenta para ver sus movimientos" />
+        <TextView
+            style="@style/TituloSeccion"
+            android:text="Nueva cuenta" />
 
-    <ListView
-        android:id="@+id/lista"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        <EditText
+            android:id="@+id/txtNombre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nombre (ej: Efectivo, Ahorros, Tarjeta)" />
+
+        <EditText
+            android:id="@+id/txtSaldo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Saldo inicial $"
+            android:inputType="numberDecimal" />
+
+        <Button
+            android:id="@+id/btnAgregar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Agregar cuenta" />
+    </LinearLayout>
+
+    <LinearLayout
+        style="@style/Tarjeta"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <TextView
+            style="@style/TituloSeccion"
+            android:text="Tus cuentas" />
+
+        <TextView
+            style="@style/Ayuda"
+            android:text="Toca una cuenta para ver sus movimientos." />
+
+        <ListView
+            android:id="@+id/lista"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
 
 </LinearLayout>

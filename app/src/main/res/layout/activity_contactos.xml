@@ -2,32 +2,54 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/fondo"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_margin="16dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Contactos"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+    <LinearLayout style="@style/Encabezado">
 
-    <EditText
-        android:id="@+id/txtNombre"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Nombre del contacto" />
+        <TextView
+            style="@style/EncabezadoTitulo"
+            android:text="👥 Contactos" />
 
-    <Button
-        android:id="@+id/btnAgregar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Agregar contacto" />
+        <TextView
+            style="@style/EncabezadoTexto"
+            android:text="Las personas con las que compartes compras o gastos. Después puedes dividir cuentas con ellas." />
+    </LinearLayout>
 
-    <ListView
-        android:id="@+id/lista"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <LinearLayout style="@style/Tarjeta">
+
+        <TextView
+            style="@style/TituloSeccion"
+            android:text="Nuevo contacto" />
+
+        <EditText
+            android:id="@+id/txtNombre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nombre del contacto" />
+
+        <Button
+            android:id="@+id/btnAgregar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Agregar contacto" />
+    </LinearLayout>
+
+    <LinearLayout
+        style="@style/Tarjeta"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <TextView
+            style="@style/TituloSeccion"
+            android:text="Tu agenda" />
+
+        <ListView
+            android:id="@+id/lista"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
 
 </LinearLayout>

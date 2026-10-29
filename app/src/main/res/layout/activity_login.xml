@@ -2,23 +2,55 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/fondo"
     android:fitsSystemWindows="true"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:layout_margin="24dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="LocalCash"
-        android:textSize="32sp"
-        android:textStyle="bold" />
+    <LinearLayout
+        style="@style/Tarjeta"
+        android:gravity="center_horizontal"
+        android:padding="28dp">
 
-    <Button
-        android:id="@+id/btnHuella"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Ingresar con huella" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💰"
+            android:textSize="56sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="LocalCash"
+            android:textColor="@color/verde_oscuro"
+            android:textSize="32sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:text="Tus cuentas, compras y deudas en un solo lugar"
+            android:textColor="@color/texto_suave"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/btnHuella"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:paddingVertical="12dp"
+            android:text="🔒  Ingresar con huella"
+            android:textSize="16sp" />
+
+        <TextView
+            style="@style/Ayuda"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="Tus datos se guardan solo en este teléfono, sin internet." />
+    </LinearLayout>
 
 </LinearLayout>

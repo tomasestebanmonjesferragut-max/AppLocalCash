@@ -76,7 +76,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         LatLng starPoin = new LatLng(-33.498895, -70.616617);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(starPoin, 18));
-        Toast.makeText(this, "Manten presionado el mapa para registrar un movimiento ahi", Toast.LENGTH_LONG).show();
 
         // Marca punto en la vista: solo uno, si se marca otro se quita el anterior
         mMap.setOnMapClickListener(punto -> {
@@ -118,35 +117,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.clear();
         puntoMarcado = null;
 
-        // Puntos en el mapa
+        // Punto en el mapa
         LatLng starPoin = new LatLng(-33.498895, -70.616617);
-        LatLng PuntoMoto = new LatLng(-33.498738, -70.616173);
-        LatLng PuntoPoli = new LatLng(-33.498609, -70.615595);
-        LatLng PuntoDulce = new LatLng(-33.50797374644561, -70.79157437996089);
 
         mMap.addMarker(new MarkerOptions()
                 .position(starPoin)
                 .title("Hola ")
                 .snippet("Repartidor cerca"));
-
-        // Puntos con iconos
-        mMap.addMarker(new MarkerOptions()
-                .position(PuntoMoto)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_moto_foreground))
-                .title("Moto")
-                .snippet("Repartidor cerca"));
-
-        mMap.addMarker(new MarkerOptions()
-                .position(PuntoPoli)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_poli_foreground))
-                .title("Poli")
-                .snippet("Carabinero cerca"));
-
-        mMap.addMarker(new MarkerOptions()
-                .position(PuntoDulce)
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_dulsuratuhogar_foreground))
-                .title("Pasteleria")
-                .snippet("Dulsura En Tu Hogar"));
 
         if (yo != null) {
             mMap.addMarker(new MarkerOptions()

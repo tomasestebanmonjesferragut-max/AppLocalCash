@@ -5,22 +5,53 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/fondo"
     tools:context=".MainActivity">
+
+    <LinearLayout
+        android:id="@+id/encabezado"
+        style="@style/Encabezado"
+        android:layout_alignParentTop="true"
+        android:layout_margin="8dp">
+
+        <TextView
+            style="@style/EncabezadoTitulo"
+            android:text="💰 LocalCash" />
+
+        <TextView
+            style="@style/EncabezadoTexto"
+            android:text="Mantén presionado el mapa para registrar un gasto o ingreso en ese lugar." />
+
+        <TextView
+            style="@style/EncabezadoTexto"
+            android:layout_marginTop="8dp"
+            android:text="🟢 Movimientos   🔵 Tú   🔴 Punto marcado"
+            android:textColor="@color/white" />
+    </LinearLayout>
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/menu" />
+        android:layout_above="@+id/menu"
+        android:layout_below="@id/encabezado" />
 
     <LinearLayout
         android:id="@+id/menu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
+        android:layout_margin="8dp"
+        android:background="@drawable/bg_tarjeta"
         android:orientation="vertical"
-        android:padding="4dp">
+        android:padding="8dp">
+
+        <Button
+            android:id="@+id/btnMovimiento"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="➕  Nuevo movimiento (sin ubicación)" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -28,27 +59,21 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/btnMovimiento"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Movimiento" />
-
-            <Button
                 android:id="@+id/btnCuentas"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
                 android:layout_weight="1"
-                android:text="Cuentas" />
+                android:text="💳 Cuentas" />
 
             <Button
                 android:id="@+id/btnContactos"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                android:text="Contactos" />
+                android:text="👥 Contactos" />
         </LinearLayout>
 
         <LinearLayout
@@ -58,18 +83,20 @@
 
             <Button
                 android:id="@+id/btnCompras"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Compras" />
+                android:text="🛒 Compras" />
 
             <Button
                 android:id="@+id/btnDeudas"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                android:text="Gastos compartidos" />
+                android:text="🤝 Compartidos" />
         </LinearLayout>
     </LinearLayout>
 

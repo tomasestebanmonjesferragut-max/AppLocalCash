@@ -2,69 +2,117 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/fondo"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_margin="16dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Compras"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+    <LinearLayout style="@style/Encabezado">
 
-    <EditText
-        android:id="@+id/txtDescripcion"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Que compraste o vas a comprar" />
+        <TextView
+            style="@style/EncabezadoTitulo"
+            android:text="🛒 Compras" />
 
-    <EditText
-        android:id="@+id/txtMonto"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Monto"
-        android:inputType="numberDecimal" />
+        <TextView
+            style="@style/EncabezadoTexto"
+            android:text="Registra lo que compraste o agenda compras futuras para saber cuánto dinero apartar." />
+    </LinearLayout>
 
-    <EditText
-        android:id="@+id/txtFecha"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Fecha (ej: 15-10-2026)"
-        android:inputType="date" />
+    <LinearLayout style="@style/Tarjeta">
 
-    <CheckBox
-        android:id="@+id/chkAgendada"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Agendar (compra futura)" />
+        <TextView
+            style="@style/TituloSeccion"
+            android:text="Nueva compra" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Compartir con" />
+        <EditText
+            android:id="@+id/txtDescripcion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Qué compraste o vas a comprar" />
 
-    <Spinner
-        android:id="@+id/spContacto"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/btnGuardar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Guardar compra" />
+            <EditText
+                android:id="@+id/txtMonto"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Monto $"
+                android:inputType="numberDecimal" />
+
+            <EditText
+                android:id="@+id/txtFecha"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:hint="Fecha (15-10-2026)"
+                android:inputType="date" />
+        </LinearLayout>
+
+        <CheckBox
+            android:id="@+id/chkAgendada"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📅 Agendar (compra futura)" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Compartir con:"
+                android:textColor="@color/texto_suave" />
+
+            <Spinner
+                android:id="@+id/spContacto"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnGuardar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Guardar compra" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/txtTotalAgendado"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_tarjeta"
+        android:backgroundTint="@color/verde_claro"
+        android:padding="12dp"
+        android:textColor="@color/verde_oscuro"
         android:textStyle="bold" />
 
-    <ListView
-        android:id="@+id/lista"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <LinearLayout
+        style="@style/Tarjeta"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <TextView
+            style="@style/TituloSeccion"
+            android:text="Historial" />
+
+        <TextView
+            style="@style/Ayuda"
+            android:text="Toca una compra agendada para marcarla como realizada." />
+
+        <ListView
+            android:id="@+id/lista"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
 
 </LinearLayout>

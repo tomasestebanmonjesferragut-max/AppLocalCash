@@ -3,11 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="20dp">
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/Ayuda"
+        android:layout_marginBottom="8dp"
+        android:text="Egreso = gastaste dinero. Ingreso = recibiste dinero. El saldo de la cuenta se actualiza solo." />
+
+    <TextView
+        style="@style/TituloSeccion"
         android:text="Cuenta" />
 
     <Spinner
@@ -16,8 +20,7 @@
         android:layout_height="wrap_content" />
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/TituloSeccion"
         android:layout_marginTop="8dp"
         android:text="Tipo" />
 
@@ -30,13 +33,14 @@
         android:id="@+id/txtMonto"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Monto"
+        android:layout_marginTop="8dp"
+        android:hint="Monto $"
         android:inputType="numberDecimal" />
 
     <EditText
         android:id="@+id/txtDescripcion"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Descripcion" />
+        android:hint="Descripción (ej: almuerzo, sueldo)" />
 
 </LinearLayout>
