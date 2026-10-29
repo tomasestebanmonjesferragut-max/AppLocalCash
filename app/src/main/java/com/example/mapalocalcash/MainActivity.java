@@ -112,18 +112,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    // Dibuja los puntos fijos, mi ubicacion y un marcador por cada movimiento con ubicacion
+    // Dibuja mi ubicacion y un marcador por cada movimiento con ubicacion
     private void cargarMapa() {
         mMap.clear();
         puntoMarcado = null;
-
-        // Punto en el mapa
-        LatLng starPoin = new LatLng(-33.498895, -70.616617);
-
-        mMap.addMarker(new MarkerOptions()
-                .position(starPoin)
-                .title("Hola ")
-                .snippet("Repartidor cerca"));
 
         if (yo != null) {
             mMap.addMarker(new MarkerOptions()
