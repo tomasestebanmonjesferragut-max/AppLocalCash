@@ -208,7 +208,7 @@ public class DeudasActivity extends AppCompatActivity {
             fila.setGravity(android.view.Gravity.CENTER_VERTICAL);
 
             TextView texto = new TextView(this);
-            texto.setText("• " + productos.get(i).getNombre() + "   $" + Math.round(productos.get(i).getPrecio()) + (dividiendo ? "" : "   ✏️"));
+            texto.setText("• " + productos.get(i).getNombre() + "   $" + Monto.miles(productos.get(i).getPrecio()) + (dividiendo ? "" : "   ✏️"));
             texto.setTextColor(ContextCompat.getColor(this, R.color.texto));
             texto.setTextSize(15);
             texto.setPadding(0, dp(6), 0, dp(6));
@@ -229,7 +229,7 @@ public class DeudasActivity extends AppCompatActivity {
             }
             listaProductos.addView(fila);
         }
-        txtTotal.setText("Total: $" + Math.round(total()));
+        txtTotal.setText("Total: $" + Monto.miles(total()));
         btnContinuar.setVisibility(!productos.isEmpty() && tarjetaDividir.getVisibility() != View.VISIBLE ? View.VISIBLE : View.GONE);
         actualizarReparto();
     }
@@ -239,7 +239,7 @@ public class DeudasActivity extends AppCompatActivity {
         tarjetaDividir.setVisibility(dividir ? View.VISIBLE : View.GONE);
         filaProducto.setVisibility(dividir ? View.GONE : View.VISIBLE);
         btnAgregarProducto.setVisibility(dividir ? View.GONE : View.VISIBLE);
-        txtTotalDividir.setText("Total a dividir: $" + Math.round(total()));
+        txtTotalDividir.setText("Total a dividir: $" + Monto.miles(total()));
         mostrarProductos();
     }
 
@@ -253,7 +253,7 @@ public class DeudasActivity extends AppCompatActivity {
             fila.setGravity(android.view.Gravity.CENTER_VERTICAL);
 
             TextView texto = new TextView(this);
-            texto.setText("👤 " + personas.get(i) + "   $" + Math.round(montosPersonas.get(i)));
+            texto.setText("👤 " + personas.get(i) + "   $" + Monto.miles(montosPersonas.get(i)));
             texto.setTextColor(ContextCompat.getColor(this, R.color.texto));
             texto.setTextSize(15);
             fila.addView(texto, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
@@ -279,7 +279,7 @@ public class DeudasActivity extends AppCompatActivity {
         if (rbIguales.isChecked()) {
             Integer n = cantidadPersonas();
             if (total > 0 && n != null) {
-                txtCadaUno.setText("Cada persona paga $" + Math.round(total / n));
+                txtCadaUno.setText("Cada persona paga $" + Monto.miles(total / n));
             } else {
                 txtCadaUno.setText("");
             }
@@ -295,10 +295,10 @@ public class DeudasActivity extends AppCompatActivity {
             txtEstadoReparto.setText("✔ Los montos cuadran con el total");
         } else if (falta > 0) {
             txtEstadoReparto.setTextColor(ContextCompat.getColor(this, R.color.rojo));
-            txtEstadoReparto.setText("⚠ No alcanza: falta asignar $" + Math.round(falta));
+            txtEstadoReparto.setText("⚠ No alcanza: falta asignar $" + Monto.miles(falta));
         } else {
             txtEstadoReparto.setTextColor(ContextCompat.getColor(this, R.color.rojo));
-            txtEstadoReparto.setText("⚠ Te pasaste del total por $" + Math.round(-falta));
+            txtEstadoReparto.setText("⚠ Te pasaste del total por $" + Monto.miles(-falta));
         }
     }
 
@@ -338,11 +338,11 @@ public class DeudasActivity extends AppCompatActivity {
             }
             double falta = total() - sumaPersonas();
             if (falta >= 0.5) {
-                Toast.makeText(this, "No alcanza el total: falta asignar $" + Math.round(falta), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "No alcanza el total: falta asignar $" + Monto.miles(falta), Toast.LENGTH_LONG).show();
                 return;
             }
             if (falta <= -0.5) {
-                Toast.makeText(this, "Los montos pasan el total por $" + Math.round(-falta), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Los montos pasan el total por $" + Monto.miles(-falta), Toast.LENGTH_LONG).show();
                 return;
             }
             nombres.addAll(personas);
@@ -529,8 +529,8 @@ public class DeudasActivity extends AppCompatActivity {
             String estado = completa ? "✅ Completa" : "⏳ Pendiente";
             String detalle = completa
                     ? "Pagaron todos (" + gasto.getPersonas() + ")"
-                    : "Pagaron " + gasto.getPagaron() + " de " + gasto.getPersonas() + " · falta cobrar $" + Math.round(gasto.getFaltaCobrar());
-            fila.setText(estado + "\n" + descripcion + "\nTotal $" + Math.round(gasto.getTotal()) + " · " + gasto.getFecha() + "\n" + detalle);
+                    : "Pagaron " + gasto.getPagaron() + " de " + gasto.getPersonas() + " · falta cobrar $" + Monto.miles(gasto.getFaltaCobrar());
+            fila.setText(estado + "\n" + descripcion + "\nTotal $" + Monto.miles(gasto.getTotal()) + " · " + gasto.getFecha() + "\n" + detalle);
             fila.setTextColor(ContextCompat.getColor(this, completa ? R.color.verde_oscuro : R.color.rojo));
             fila.setTextSize(15);
             fila.setBackgroundResource(R.drawable.bg_tarjeta);
@@ -560,7 +560,7 @@ public class DeudasActivity extends AppCompatActivity {
         ArrayList<String> textos = new ArrayList<>();
         boolean[] marcados = new boolean[deudas.size()];
         for (int i = 0; i < deudas.size(); i++) {
-            textos.add(deudas.get(i).getNombre() + "   $" + Math.round(deudas.get(i).getMonto()));
+            textos.add(deudas.get(i).getNombre() + "   $" + Monto.miles(deudas.get(i).getMonto()));
             marcados[i] = deudas.get(i).isPagada();
         }
 

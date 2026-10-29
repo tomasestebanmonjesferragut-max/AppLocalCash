@@ -114,7 +114,7 @@ public class ComprasActivity extends AppCompatActivity {
         for (Compra compra : compras) {
             // Las compras son gastos: monto en rojo
             String antes = (compra.isAgendada() ? "📅 Agendada · " : "") + compra.getFecha() + " " + compra.getDescripcion() + "  ";
-            CharSequence texto = Monto.conColor(this, antes, "− $" + Math.round(compra.getMonto()), false);
+            CharSequence texto = Monto.conColor(this, antes, "− $" + Monto.miles(compra.getMonto()), false);
             if (compra.getContactoNombre() != null) {
                 texto = TextUtils.concat(texto, "  (con " + compra.getContactoNombre() + ")");
             }
@@ -124,7 +124,7 @@ public class ComprasActivity extends AppCompatActivity {
             textos.add(texto);
         }
 
-        txtTotalAgendado.setText("Monto a apartar para compras agendadas: $" + Math.round(totalAgendado));
+        txtTotalAgendado.setText("Monto a apartar para compras agendadas: $" + Monto.miles(totalAgendado));
         lista.setAdapter(new ArrayAdapter<>(this, R.layout.item_lista, textos));
     }
 }

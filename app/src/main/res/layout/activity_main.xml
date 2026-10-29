@@ -173,7 +173,7 @@
             <TextView
                 style="@style/Ayuda"
                 android:layout_marginTop="12dp"
-                android:text="Tip: para guardar un gasto con su ubicación, abre el mapa y mantén presionado el lugar." />
+                android:text="Tip: al registrar un gasto o ingreso puedes ponerle tu ubicación actual o elegir el lugar en el mapa." />
         </LinearLayout>
     </ScrollView>
 

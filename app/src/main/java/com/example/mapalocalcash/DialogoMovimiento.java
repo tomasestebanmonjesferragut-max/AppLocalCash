@@ -76,7 +76,7 @@ public class DialogoMovimiento {
         }
         ArrayList<String> nombresCuentas = new ArrayList<>();
         for (Cuenta cuenta : cuentas) {
-            nombresCuentas.add(cuenta.getNombre() + "   ($" + Math.round(cuenta.getSaldo()) + ")");
+            nombresCuentas.add(cuenta.getNombre() + "   (" + Monto.dinero(cuenta.getSaldo()) + ")");
         }
 
         View vista = activity.getLayoutInflater().inflate(R.layout.dialog_movimiento, null);

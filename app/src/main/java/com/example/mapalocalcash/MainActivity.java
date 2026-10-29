@@ -91,8 +91,8 @@ public class MainActivity extends AppCompatActivity {
         double saldo = cuentaDAO.saldoTotal();
         double teDeben = deudaDAO.totalPendiente();
 
-        txtSaldoTotal.setText("$" + Math.round(saldo));
+        txtSaldoTotal.setText(Monto.dinero(saldo));
         txtSaldoTotal.setTextColor(ContextCompat.getColor(this, saldo >= 0 ? R.color.verde_oscuro : R.color.rojo));
-        txtTeDeben.setText("+ $" + Math.round(teDeben));
+        txtTeDeben.setText("+ $" + Monto.miles(teDeben));
     }
 }

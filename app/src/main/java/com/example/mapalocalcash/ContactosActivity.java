@@ -80,7 +80,7 @@ public class ContactosActivity extends AppCompatActivity {
             String antes = "👤 " + contacto.getNombre() + (telefono.isEmpty() ? "" : "\n📞 " + telefono) + "\n";
             double debe = deudaDAO.totalPendienteDeContacto(contacto.getId(), contacto.getNombre());
             textos.add(debe > 0
-                    ? Monto.conColor(this, antes, "Te debe + $" + Math.round(debe), true)
+                    ? Monto.conColor(this, antes, "Te debe + $" + Monto.miles(debe), true)
                     : antes + "✔ Al día");
         }
         lista.setAdapter(new ArrayAdapter<>(this, R.layout.item_lista, textos));
@@ -150,7 +150,7 @@ public class ContactosActivity extends AppCompatActivity {
 
         ArrayList<CharSequence> textos = new ArrayList<>();
         for (Deuda deuda : deudas) {
-            textos.add(TextUtils.concat(Monto.conColor(this, "", "+ $" + Math.round(deuda.getMonto()), true), "  " + deuda.getOrigen()));
+            textos.add(TextUtils.concat(Monto.conColor(this, "", "+ $" + Monto.miles(deuda.getMonto()), true), "  " + deuda.getOrigen()));
         }
 
         boolean[] pagadas = new boolean[deudas.size()];

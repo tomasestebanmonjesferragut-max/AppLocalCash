@@ -190,7 +190,7 @@ public class MapaActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .position(new LatLng(m.getLat(), m.getLon()))
                     .icon(BitmapDescriptorFactory.defaultMarker(ingreso ? BitmapDescriptorFactory.HUE_GREEN : BitmapDescriptorFactory.HUE_RED))
                     .title(m.getDescripcion())
-                    .snippet((ingreso ? "+ $" : "− $") + Math.round(m.getMonto()) + "  " + m.getTipo() + " · " + m.getCuentaNombre() + "  (toca para borrar)"));
+                    .snippet((ingreso ? "+ $" : "− $") + Monto.miles(m.getMonto()) + "  " + m.getTipo() + " · " + m.getCuentaNombre() + "  (toca para borrar)"));
             if (marcador != null) {
                 marcador.setTag(m.getId());
             }

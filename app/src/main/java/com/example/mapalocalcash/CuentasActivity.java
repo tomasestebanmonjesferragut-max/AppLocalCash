@@ -66,7 +66,7 @@ public class CuentasActivity extends AppCompatActivity {
         ArrayList<CharSequence> textos = new ArrayList<>();
         for (Cuenta cuenta : cuentas) {
             // Saldo en verde si es positivo, en rojo si es negativo
-            textos.add(Monto.conColor(this, cuenta.getNombre() + "   ", "$" + Math.round(cuenta.getSaldo()), cuenta.getSaldo() >= 0));
+            textos.add(Monto.conColor(this, cuenta.getNombre() + "   ", Monto.dinero(cuenta.getSaldo()), cuenta.getSaldo() >= 0));
         }
         lista.setAdapter(new ArrayAdapter<>(this, R.layout.item_lista, textos));
     }
@@ -110,7 +110,7 @@ public class CuentasActivity extends AppCompatActivity {
         for (Movimiento m : movimientos) {
             String ubicacion = m.tieneUbicacion() ? " 📍" : "";
             // Ingreso en verde con +, egreso en rojo con −
-            String monto = (m.esIngreso() ? "+ $" : "− $") + Math.round(m.getMonto());
+            String monto = (m.esIngreso() ? "+ $" : "− $") + Monto.miles(m.getMonto());
             textos.add(TextUtils.concat(Monto.conColor(this, "", monto, m.esIngreso()), "  " + m.getDescripcion() + ubicacion));
         }
 
