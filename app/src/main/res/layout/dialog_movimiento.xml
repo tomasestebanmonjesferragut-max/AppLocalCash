@@ -66,4 +66,37 @@
         android:layout_height="wrap_content"
         android:hint="Descripción (ej: almuerzo, sueldo)" />
 
+    <TextView
+        style="@style/TituloSeccion"
+        android:layout_marginTop="8dp"
+        android:text="📍 Ubicación (opcional)" />
+
+    <!-- Desde el panel: usar el GPS o ir al mapa a elegir el lugar -->
+    <LinearLayout
+        android:id="@+id/panelUbicacion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <CheckBox
+            android:id="@+id/chkUbicacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Usar mi ubicación actual" />
+
+        <Button
+            android:id="@+id/btnElegirMapa"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🗺️ Elegir el lugar en el mapa" />
+    </LinearLayout>
+
+    <!-- Desde el mapa: el lugar ya esta elegido -->
+    <TextView
+        android:id="@+id/txtUbicacionMapa"
+        style="@style/Ayuda"
+        android:text="Se guarda en el punto que mantuviste presionado en el mapa."
+        android:visibility="gone" />
+
 </LinearLayout>
