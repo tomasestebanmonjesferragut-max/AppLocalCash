@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -84,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             puntoMarcado = mMap.addMarker(new MarkerOptions()
                     .position(punto)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW))
                     .title("Punto marcado")
                     .snippet("Toca este cartel para quitarlo"));
         });
@@ -124,15 +126,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .title("Estoy aqui"));
         }
 
-        // Movimientos guardados en SQLite (verdes)
+        // Movimientos guardados en SQLite: ingreso en verde (suma), egreso en rojo (resta)
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT m.tipo, m.monto, m.descripcion, m.lat, m.lon, c.nombre FROM movimientos m JOIN cuentas c ON c.id = m.cuenta_id WHERE m.lat IS NOT NULL", null);
         while (c.moveToNext()) {
+            boolean ingreso = c.getString(0).equals("Ingreso");
             mMap.addMarker(new MarkerOptions()
                     .position(new LatLng(c.getDouble(3), c.getDouble(4)))
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                    .icon(BitmapDescriptorFactory.defaultMarker(ingreso ? BitmapDescriptorFactory.HUE_GREEN : BitmapDescriptorFactory.HUE_RED))
                     .title(c.getString(2))
-                    .snippet(c.getString(0) + " $" + Math.round(c.getDouble(1)) + " - " + c.getString(5)));
+                    .snippet((ingreso ? "+ $" : "− $") + Math.round(c.getDouble(1)) + "  " + c.getString(0) + " · " + c.getString(5)));
         }
         c.close();
     }
@@ -187,12 +190,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         View vista = getLayoutInflater().inflate(R.layout.dialog_movimiento, null);
         Spinner spCuenta = vista.findViewById(R.id.spCuenta);
-        Spinner spTipo = vista.findViewById(R.id.spTipo);
+        RadioButton rbIngreso = vista.findViewById(R.id.rbIngreso);
         EditText txtMonto = vista.findViewById(R.id.txtMonto);
         EditText txtDescripcion = vista.findViewById(R.id.txtDescripcion);
 
         spCuenta.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, nombresCuentas));
-        spTipo.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, new String[]{"Egreso", "Ingreso"}));
 
         new AlertDialog.Builder(this)
                 .setTitle(punto == null ? "Nuevo movimiento" : "Nuevo movimiento en el mapa")
@@ -204,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         return;
                     }
                     double monto = Double.parseDouble(textoMonto);
-                    String tipo = spTipo.getSelectedItem().toString();
+                    String tipo = rbIngreso.isChecked() ? "Ingreso" : "Egreso";
                     int cuentaId = idsCuentas.get(spCuenta.getSelectedItemPosition());
 
                     ContentValues valores = new ContentValues();

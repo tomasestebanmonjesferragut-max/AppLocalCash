@@ -24,10 +24,33 @@
         android:layout_marginTop="8dp"
         android:text="Tipo" />
 
-    <Spinner
-        android:id="@+id/spTipo"
+    <RadioGroup
+        android:id="@+id/rgTipo"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/rbEgreso"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:buttonTint="@color/rojo"
+            android:checked="true"
+            android:text="➖ Egreso\n(resta)"
+            android:textColor="@color/rojo"
+            android:textStyle="bold" />
+
+        <RadioButton
+            android:id="@+id/rbIngreso"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:buttonTint="@color/verde"
+            android:text="➕ Ingreso\n(suma)"
+            android:textColor="@color/verde_oscuro"
+            android:textStyle="bold" />
+    </RadioGroup>
 
     <EditText
         android:id="@+id/txtMonto"

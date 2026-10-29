@@ -25,7 +25,7 @@
         <TextView
             style="@style/EncabezadoTexto"
             android:layout_marginTop="8dp"
-            android:text="🟢 Movimientos   🔵 Tú   🔴 Punto marcado"
+            android:text="🟢 Ingreso (+)   🔴 Egreso (−)   🔵 Tú   🟡 Marcado"
             android:textColor="@color/white" />
     </LinearLayout>
 
